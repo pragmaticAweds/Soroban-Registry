@@ -7,6 +7,7 @@ mod auth;
 mod auth_handlers;
 mod batch_verify_handlers;
 mod breaking_changes;
+mod bulk_operations_handlers;
 mod cache;
 mod canary_handlers;
 mod compatibility_testing_handlers;
