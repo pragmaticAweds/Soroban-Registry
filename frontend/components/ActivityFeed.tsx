@@ -65,7 +65,6 @@ const getEventConfig = (
 export default function ActivityFeed() {
   const { t } = useTranslation("common");
   const EVENT_CONFIG = getEventConfig(t);
-  const queryClient = useQueryClient();
   const { subscribe, isConnected } = useRealtime();
 
   const [eventType, setEventType] = useState<AnalyticsEventType | "all">("all");
@@ -94,19 +93,18 @@ export default function ActivityFeed() {
   // Handle real-time events
   useEffect(() => {
     const handleDeployment = (event: RealtimeDeploymentEvent) => {
-      // Convert RealtimeEvent to AnalyticsEvent
       const newEvent: AnalyticsEvent = {
         id: Math.random().toString(36).substring(7),
         event_type: "contract_deployed",
         contract_id: event.contract_id,
         user_address: event.publisher,
-        network: null, // We don't have it in the realtime event directly but could infer or leave null
+        network: null,
         metadata: { name: event.contract_name, version: event.version },
         created_at: event.timestamp || new Date().toISOString(),
       };
 
       if (eventType === "all" || eventType === "contract_deployed") {
-        setItems((prev) => [newEvent, ...prev].slice(0, 100)); // Limit local cache
+        setItems((prev) => [newEvent, ...prev].slice(0, 100));
       }
     };
 
