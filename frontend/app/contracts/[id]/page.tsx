@@ -28,15 +28,11 @@ import CodeCopyButton from "@/components/CodeCopyButton";
 import { useParams, useSearchParams } from "next/navigation";
 import { useAnalytics } from "@/hooks/useAnalytics";
 import FormalVerificationPanel from "@/components/FormalVerificationPanel";
-import InteractionHistorySection from "@/components/InteractionHistorySection";
 import Navbar from "@/components/Navbar";
 import MaintenanceBanner from "@/components/MaintenanceBanner";
-import CustomMetricsPanel from "@/components/CustomMetricsPanel";
 import DeprecationBanner from "@/components/DeprecationBanner";
 import ReleaseNotesPanel from "@/components/ReleaseNotesPanel";
-import ContractComments from "@/components/ContractComments";
 import { useContractAutoRefresh } from "@/hooks/useContractAutoRefresh";
-import { ContractTimeline } from "@/components/contracts/contract-timeline";
 import ContractInteractionFlow from "@/components/contracts/ContractInteractionFlow";
 import ContractAbiMethodExplorer from "@/components/contracts/ContractAbiMethodExplorer";
 import VerificationBadge from "@/components/verification/VerificationBadge";
@@ -174,11 +170,6 @@ function ContractDetailsContent() {
   const id = Array.isArray(idParam) ? idParam[0] : idParam;
   const { copy: copyHeader, copied: copiedHeader } = useCopy();
   const { copy: copySidebar, copied: copiedSidebar } = useCopy();
-  const {
-    copy: copySourceCode,
-    copied: copiedSourceCode,
-    isCopying: isCopyingSourceCode,
-  } = useCopy();
   const { copy: copyShareLink, copied: copiedShareLink } = useCopy();
   const networkFromUrl = searchParams?.get("network") as Network | null;
   const [selectedNetwork, setSelectedNetwork] = useState<Network>(
@@ -263,23 +254,6 @@ function ContractDetailsContent() {
   });
 
   const sourceUrl = latestVersion?.source_url;
-  const sourceQueryUrl = sourceUrl
-    ? normalizeRawSourceUrl(sourceUrl)
-    : undefined;
-  const {
-    data: sourceCode,
-    isLoading: sourceLoading,
-    error: sourceError,
-  } = useQuery({
-    queryKey: ["contract-source", id, sourceQueryUrl],
-    queryFn: async () => {
-      if (!sourceQueryUrl) return "";
-      const res = await fetch(sourceQueryUrl);
-      if (!res.ok) throw new Error("Unable to fetch source from source_url");
-      return res.text();
-    },
-    enabled: !!id && !!contract && activeTab === "source" && !!sourceQueryUrl,
-  });
 
   const loweredSearch = tabSearch.trim().toLowerCase();
   const filteredVersions = useMemo(() => {
@@ -458,7 +432,7 @@ function ContractDetailsContent() {
             </div>
           </div>
 
-          {/* Network tabs (Issue #43) */}
+          {/* Network tabs */}
           <div className="flex gap-1 p-1 bg-accent rounded-xl w-fit">
             {NETWORKS.map((net) => {
               const hasConfig = !!contract.network_configs?.[net];
@@ -879,7 +853,7 @@ function ContractDetailsContent() {
                 )}
               </div>
 
-              <h3 className="text-sm font-semibold text-foreground uppercase tracking-wide">
+              <h3 className="text-sm font-semibond text-foreground uppercase tracking-wide">
                 Deployment Timeline
               </h3>
               <div className="space-y-3">
