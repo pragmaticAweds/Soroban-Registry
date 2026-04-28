@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { QueryNode, FieldOperator } from '@/types';
 import { Info } from 'lucide-react';
 

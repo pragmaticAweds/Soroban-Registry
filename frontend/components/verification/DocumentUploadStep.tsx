@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import FileUploader from '@/components/verification/FileUploader';
 
 export default function DocumentUploadStep(props: {

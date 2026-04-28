@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Navbar from '@/components/Navbar';
 import { useTheme, Theme } from '@/hooks/useTheme';
 import { Sun, Moon, Monitor, Shield, Bell, User, Globe, Lock, Palette } from 'lucide-react';

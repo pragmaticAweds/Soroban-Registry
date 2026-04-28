@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { api, QueryNode } from '@/lib/api';
 import { Star, Trash2, Clock, Play, Loader2, Bookmark } from 'lucide-react';

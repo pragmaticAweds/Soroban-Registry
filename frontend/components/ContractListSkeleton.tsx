@@ -1,4 +1,3 @@
-import React from 'react';
 import ContractCardSkeleton from './ContractCardSkeleton';
 
 export default function ContractListSkeleton({ count = 6 }: { count?: number }) {

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import type { VerificationDocument, VerificationDraft, VerificationStatus } from '@/types/verification';
 import { formatBytes } from '@/utils/fileValidation';
 import VerificationBadge from '@/components/verification/VerificationBadge';

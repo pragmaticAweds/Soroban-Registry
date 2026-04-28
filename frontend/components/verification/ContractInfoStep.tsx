@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import { FormInput, FormSelect } from '@/components/Form';
 import type { VerificationDraft } from '@/types/verification';

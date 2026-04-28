@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { Check } from 'lucide-react';
 import type { VerificationStepKey } from '@/types/verification';
 

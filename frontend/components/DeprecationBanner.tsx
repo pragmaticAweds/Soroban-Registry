@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import type { DeprecationInfo } from '@/types';
 import { AlertTriangle, ArrowUpRight } from 'lucide-react';

@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import Link from 'next/link';
 import { Package, Columns2, ShoppingCart, ShieldCheck, Code2, ChevronDown, Users, BarChart2, PieChart, Layers, GitBranch } from 'lucide-react';
 import { useTranslation } from '@/lib/i18n/client';

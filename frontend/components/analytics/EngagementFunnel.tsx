@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { FunnelStage } from '@/types/analytics';
 import { Users } from 'lucide-react';
 

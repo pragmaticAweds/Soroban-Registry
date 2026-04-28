@@ -1,9 +1,9 @@
 'use client';
 
-import { useReportWebVitals } from 'next/app';
+import { useReportWebVitals, type Metric } from 'next/web-vitals';
 
 export function useWebVitals() {
-  useReportWebVitals((metric) => {
+  useReportWebVitals((metric: Metric) => {
     const body = JSON.stringify(metric);
     const url = '/api/analytics/vitals';
 

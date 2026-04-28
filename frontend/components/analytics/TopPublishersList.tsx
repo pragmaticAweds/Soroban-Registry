@@ -1,4 +1,3 @@
-import React from 'react';
 import { Award, Users } from 'lucide-react';
 
 interface Publisher {

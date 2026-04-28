@@ -47,3 +47,21 @@ export interface SemanticSearchMetadata {
 export interface SemanticContractSearchResponse extends PaginatedResponse<Contract> {
   semantic: SemanticSearchMetadata;
 }
+
+/**
+ * Advanced query types for contract search
+ */
+
+export type FieldOperator = 'eq' | 'ne' | 'gt' | 'lt' | 'in' | 'contains' | 'startsWith';
+
+export interface QueryCondition {
+  field: string;
+  operator: FieldOperator;
+  value: unknown;
+}
+
+export type QueryOperator = 'AND' | 'OR';
+
+export type QueryNode =
+  | { type: 'condition'; condition: QueryCondition }
+  | { type: 'group'; operator: QueryOperator; nodes: QueryNode[] };

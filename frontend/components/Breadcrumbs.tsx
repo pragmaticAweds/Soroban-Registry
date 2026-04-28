@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { ChevronRight, Home } from 'lucide-react';
 import React from 'react';
+import { ChevronRight, Home } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 
 export interface BreadcrumbItem {

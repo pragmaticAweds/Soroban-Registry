@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 
 const RUST_KW = new Set([
   "fn", "let", "mut", "pub", "struct", "enum", "impl", "trait", "use", "mod",
