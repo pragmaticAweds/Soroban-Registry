@@ -134,19 +134,15 @@ export function ContractsTable({ data, sortBy, sortOrder, onSortChange }: Contra
         const color = colors[row.original.network] || 'bg-muted text-muted-foreground border-border';
         return <span className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border ${color}`}>{row.original.network}</span>;
       },
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> main
     },
     {
       id: 'is_verified',
       accessorKey: 'is_verified',
       header: 'Status',
       cell: ({ row }) => (
-        row.original.is_verified ? 
-        <span className="inline-flex items-center gap-1 text-[11px] text-green-500 font-medium"><CheckCircle2 className="w-3 h-3" /> Verified</span> :
-        <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium">Pending</span>
+        row.original.is_verified ?
+          <span className="inline-flex items-center gap-1 text-[11px] text-green-500 font-medium"><CheckCircle2 className="w-3 h-3" /> Verified</span> :
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium">Pending</span>
       ),
     },
     {
@@ -164,86 +160,80 @@ export function ContractsTable({ data, sortBy, sortOrder, onSortChange }: Contra
       header: 'Created',
       cell: ({ row }) => <div className="text-xs text-muted-foreground whitespace-nowrap">{new Date(row.original.created_at).toLocaleDateString()}</div>,
     },
-  ], []);
-<<<<<<< HEAD
-=======
-=======
-      {
-        id: "category",
-        accessorKey: "category",
-        header: "Category",
-        cell: ({ row }) => (
-          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-primary/10 text-primary font-medium">
-            <Tag className="w-3 h-3" />
-            {row.original.category || "Uncategorized"}
+    {
+      id: "category",
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] bg-primary/10 text-primary font-medium">
+          <Tag className="w-3 h-3" />
+          {row.original.category || "Uncategorized"}
+        </span>
+      ),
+    },
+    {
+      id: "network",
+      accessorKey: "network",
+      header: "Network",
+      cell: ({ row }) => {
+        const colors: Record<string, string> = {
+          mainnet: "bg-green-500/10 text-green-600 border-green-500/20",
+          testnet: "bg-blue-500/10 text-blue-600 border-blue-500/20",
+          futurenet: "bg-purple-500/10 text-purple-600 border-purple-500/20",
+        };
+        const color =
+          colors[row.original.network] ||
+          "bg-muted text-muted-foreground border-border";
+        return (
+          <span
+            className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border ${color}`}
+          >
+            {row.original.network}
+          </span>
+        );
+      },
+    },
+    {
+      id: "is_verified",
+      accessorKey: "is_verified",
+      header: "Status",
+      cell: ({ row }) =>
+        row.original.is_verified ? (
+          <span className="inline-flex items-center gap-1 text-[11px] text-green-500 font-medium">
+            <CheckCircle2 className="w-3 h-3" /> Verified
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
+            Pending
           </span>
         ),
-      },
-      {
-        id: "network",
-        accessorKey: "network",
-        header: "Network",
-        cell: ({ row }) => {
-          const colors: Record<string, string> = {
-            mainnet: "bg-green-500/10 text-green-600 border-green-500/20",
-            testnet: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-            futurenet: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-          };
-          const color =
-            colors[row.original.network] ||
-            "bg-muted text-muted-foreground border-border";
-          return (
-            <span
-              className={`px-2 py-0.5 rounded-full text-[10px] uppercase font-bold border ${color}`}
-            >
-              {row.original.network}
-            </span>
-          );
-        },
-      },
-      {
-        id: "is_verified",
-        accessorKey: "is_verified",
-        header: "Status",
-        cell: ({ row }) =>
-          row.original.is_verified ? (
-            <span className="inline-flex items-center gap-1 text-[11px] text-green-500 font-medium">
-              <CheckCircle2 className="w-3 h-3" /> Verified
-            </span>
-          ) : (
-            <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground font-medium">
-              Pending
-            </span>
-          ),
-      },
-      {
-        id: "deployments",
-        accessorFn: (row: Contract & { deployment_count?: number }) =>
-          typeof row.deployment_count === "number"
-            ? row.deployment_count
-            : typeof row.deployments === "number"
-              ? row.deployments
-              : 0,
-        header: "Deployments",
-        cell: ({ getValue }) => (
-          <div className="font-mono text-xs">{getValue() as number}</div>
-        ),
-      },
-      {
-        id: "created_at",
-        accessorKey: "created_at",
-        header: "Created",
-        cell: ({ row }) => (
-          <div className="text-xs text-muted-foreground whitespace-nowrap">
-            {new Date(row.original.created_at).toLocaleDateString()}
-          </div>
-        ),
-      },
-    ],
+    },
+    {
+      id: "deployments",
+      accessorFn: (row: Contract & { deployment_count?: number }) =>
+        typeof row.deployment_count === "number"
+          ? row.deployment_count
+          : typeof row.deployments === "number"
+            ? row.deployments
+            : 0,
+      header: "Deployments",
+      cell: ({ getValue }) => (
+        <div className="font-mono text-xs">{getValue() as number}</div>
+      ),
+    },
+    {
+      id: "created_at",
+      accessorKey: "created_at",
+      header: "Created",
+      cell: ({ row }) => (
+        <div className="text-xs text-muted-foreground whitespace-nowrap">
+          {new Date(row.original.created_at).toLocaleDateString()}
+        </div>
+      ),
+    },
+  ],
     [],
   );
->>>>>>> main
->>>>>>> main
 
   const sortingWrapper: SortingState = useMemo(() => {
     return [{ id: sortByContext(sortBy), desc: sortOrder === 'desc' }];
@@ -354,12 +344,12 @@ export function ContractsTable({ data, sortBy, sortOrder, onSortChange }: Contra
                     </label>
                   ))}
                   <div className="border-t border-border mt-2 pt-2 pb-1 px-1">
-                     <button 
-                       onClick={() => table.resetColumnVisibility()}
-                       className="w-full text-left px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded-md transition-colors"
-                     >
-                       Reset to default
-                     </button>
+                    <button
+                      onClick={() => table.resetColumnVisibility()}
+                      className="w-full text-left px-2 py-1 text-xs text-primary hover:bg-primary/10 rounded-md transition-colors"
+                    >
+                      Reset to default
+                    </button>
                   </div>
                 </div>
               </>

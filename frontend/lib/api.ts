@@ -15,6 +15,7 @@ if (process.env.NEXT_PUBLIC_USE_MOCKS === "true") {
   MOCK_EXAMPLES = mocks.MOCK_EXAMPLES;
   MOCK_VERSIONS = mocks.MOCK_VERSIONS;
 }
+import { CollaborativeComment, CollaborativeReviewDetails, VerificationLevel } from "@/types";
 import { trackEvent } from "./analytics";
 import {
   ApiError,

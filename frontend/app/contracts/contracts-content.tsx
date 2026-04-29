@@ -37,10 +37,6 @@ import {
   resolveInitialSortPreference,
   type SortBy,
 } from "./sort-utils";
-<<<<<<< HEAD
-=======
->>>>>>> main
->>>>>>> main
 import {
   combineAdvancedQueryWithFilters,
   parseAdvancedContractQuery,
@@ -217,17 +213,8 @@ export function getInitialFilters(
     tags,
     author: searchParams.get("author") || "",
     networks,
-<<<<<<< HEAD
     verified_only: searchParams.get("verified_only") === "true",
     favorites_only: searchParams.get("favorites_only") === "true",
-=======
-<<<<<<< HEAD
-    verified_only: searchParams.get('verified_only') === 'true',
-=======
-    verified_only: searchParams.get("verified_only") === "true",
-    favorites_only: searchParams.get("favorites_only") === "true",
->>>>>>> main
->>>>>>> main
     sort_by: sortPreference.sort_by,
     sort_order: sortPreference.sort_order,
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
@@ -705,33 +692,11 @@ export function ContractsContent() {
             <div className="max-w-2xl mx-auto mb-10">
               <SearchBar
                 value={filters.query}
-<<<<<<< HEAD
-                onChange={(next: string) =>
-=======
-<<<<<<< HEAD
                 onChange={(next: string) =>
                   setFilters((current) => ({ ...current, query: next, page: 1 }))
                 }
                 onClear={() => setFilters((current) => ({ ...current, query: '', page: 1 }))}
-                onCommit={(committed: string) => {
-=======
-                onChange={(next) =>
->>>>>>> main
-                  setFilters((current) => ({
-                    ...current,
-                    query: next,
-                    page: 1,
-                  }))
-                }
-                onClear={() =>
-                  setFilters((current) => ({ ...current, query: "", page: 1 }))
-                }
-<<<<<<< HEAD
-                onCommit={(committed: string) => {
-=======
                 onCommit={(committed) => {
->>>>>>> main
->>>>>>> main
                   const parsed = parseAdvancedContractQuery(committed);
                   if (parsed.usesOr) {
                     setFilters((current) => ({
