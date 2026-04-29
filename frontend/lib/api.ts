@@ -22,11 +22,6 @@ import {
   extractErrorData,
   createApiError,
 } from "./errors";
-import type {
-  CollaborativeComment,
-  CollaborativeReviewDetails,
-} from "@/types/models/reviews";
-import type { VerificationLevel } from "@/types/verification";
 
 export type Network = "mainnet" | "testnet" | "futurenet";
 
@@ -478,7 +473,7 @@ export interface DeprecationInfo {
   dependents_notified: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3001";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "";
 const USE_MOCKS = process.env.NEXT_PUBLIC_USE_MOCKS === "true";
 
 const CATEGORY_SYNONYMS: Record<string, string> = {

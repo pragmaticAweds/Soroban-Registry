@@ -1,5 +1,27 @@
 "use client";
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { api, ContractSearchParams, Contract, SemanticContractSearchResponse } from '@/lib/api';
+import ContractCard from '@/components/ContractCard';
+import ContractCardSkeleton from '@/components/ContractCardSkeleton';
+import { ActiveFilters } from '@/components/contracts/ActiveFilters';
+import { FilterPanel } from '@/components/contracts/FilterPanel';
+import { ResultsCount } from '@/components/contracts/ResultsCount';
+import { SortDropdown } from '@/components/contracts/SortDropdown';
+import { SortBy, resolveInitialSortPreference } from './sort-utils';
+import TagAutocomplete from '@/components/tags/TagAutocomplete';
+import { Filter, Package, SlidersHorizontal, X, Sparkles, CheckCircle, Users, Search } from 'lucide-react';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import QueryBuilder from '@/components/contracts/QueryBuilder';
+import FavoriteSearches from '@/components/contracts/FavoriteSearches';
+import { SearchBar } from '@/components/contracts/SearchBar';
+=======
+>>>>>>> main
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -37,6 +59,10 @@ import {
   resolveInitialSortPreference,
   type SortBy,
 } from "./sort-utils";
+<<<<<<< HEAD
+=======
+>>>>>>> main
+>>>>>>> main
 import {
   combineAdvancedQueryWithFilters,
   parseAdvancedContractQuery,
@@ -213,8 +239,17 @@ export function getInitialFilters(
     tags,
     author: searchParams.get("author") || "",
     networks,
+<<<<<<< HEAD
     verified_only: searchParams.get("verified_only") === "true",
     favorites_only: searchParams.get("favorites_only") === "true",
+=======
+<<<<<<< HEAD
+    verified_only: searchParams.get('verified_only') === 'true',
+=======
+    verified_only: searchParams.get("verified_only") === "true",
+    favorites_only: searchParams.get("favorites_only") === "true",
+>>>>>>> main
+>>>>>>> main
     sort_by: sortPreference.sort_by,
     sort_order: sortPreference.sort_order,
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
@@ -692,7 +727,18 @@ export function ContractsContent() {
             <div className="max-w-2xl mx-auto mb-10">
               <SearchBar
                 value={filters.query}
+<<<<<<< HEAD
                 onChange={(next: string) =>
+=======
+<<<<<<< HEAD
+                onChange={(next: string) =>
+                  setFilters((current) => ({ ...current, query: next, page: 1 }))
+                }
+                onClear={() => setFilters((current) => ({ ...current, query: '', page: 1 }))}
+                onCommit={(committed: string) => {
+=======
+                onChange={(next) =>
+>>>>>>> main
                   setFilters((current) => ({
                     ...current,
                     query: next,
@@ -702,7 +748,12 @@ export function ContractsContent() {
                 onClear={() =>
                   setFilters((current) => ({ ...current, query: "", page: 1 }))
                 }
+<<<<<<< HEAD
                 onCommit={(committed: string) => {
+=======
+                onCommit={(committed) => {
+>>>>>>> main
+>>>>>>> main
                   const parsed = parseAdvancedContractQuery(committed);
                   if (parsed.usesOr) {
                     setFilters((current) => ({
@@ -959,8 +1010,18 @@ export function ContractsContent() {
                   No contracts found
                 </h3>
                 <p className="text-muted-foreground max-w-md mx-auto mb-6 text-sm">
+<<<<<<< HEAD
                   We couldn&apos;t find any contracts matching your current filters.
                   Try adjusting your search or clearing some filters.
+=======
+<<<<<<< HEAD
+                  We couldn&apos;t find any contracts matching your current filters. Try adjusting your
+                  search or clearing some filters.
+=======
+                  We couldn't find any contracts matching your current filters.
+                  Try adjusting your search or clearing some filters.
+>>>>>>> main
+>>>>>>> main
                 </p>
                 <button
                   type="button"

@@ -102,6 +102,10 @@ export function GraphContent() {
     const graphRef = useRef<DependencyGraphHandle | null>(null);
     const { logEvent } = useAnalytics();
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> main
     // Reset exploration state when mode is toggled off
     useEffect(() => {
         if (!explorationMode) {
@@ -112,6 +116,19 @@ export function GraphContent() {
             });
         }
     }, [explorationMode]);
+<<<<<<< HEAD
+=======
+=======
+  // Reset exploration state when mode is toggled off
+  useEffect(() => {
+    if (!explorationMode) {
+      setExplorationNodes([]);
+      setExplorationEdges([]);
+      setExpandedNodeIds(new Set());
+    }
+  }, [explorationMode]);
+>>>>>>> main
+>>>>>>> main
 
     const fetchLocalGraph = useCallback(async (id: string) => {
         if (!id) return;
@@ -211,6 +228,10 @@ export function GraphContent() {
         return { nodes, edges };
     }, [explorationMode, explorationNodes, explorationEdges, rawNodes, rawEdges, networkFilter, searchQuery, dependencyTypeFilter, minCallFrequency, showCyclesOnly]);
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> main
     const nodes = filteredGraph.nodes;
     const edges = filteredGraph.edges;
 
@@ -313,6 +334,14 @@ export function GraphContent() {
     const cyclicEdgeCount = useMemo(
         () => edges.filter((edge) => edge.is_circular).length,
         [edges]
+<<<<<<< HEAD
+=======
+=======
+  const handlePrevMatch = useCallback(() => {
+    setSearchMatchIndex(
+      (i) => (i - 1 + searchMatches.length) % searchMatches.length,
+>>>>>>> main
+>>>>>>> main
     );
 
     // Keyboard shortcuts
@@ -399,6 +428,10 @@ export function GraphContent() {
     }
 
     return (
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> main
         <div className="relative h-[calc(100vh-4rem)] overflow-hidden bg-background">
             {/* Graph Canvas */}
             <div className="w-full h-full bg-background relative">
@@ -550,6 +583,15 @@ export function GraphContent() {
                     </div>
                 </div>
             )}
+<<<<<<< HEAD
+=======
+=======
+      <div className="flex items-center justify-center h-[calc(100vh-4rem)] bg-background">
+        <div className="text-center">
+          <div className="inline-block w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
+          <p className="text-muted-foreground text-sm">{t("graph.loading")}</p>
+>>>>>>> main
+>>>>>>> main
         </div>
     );
 }

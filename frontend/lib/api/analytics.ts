@@ -146,3 +146,53 @@ function generateNetworkDistribution() {
   const total = raw.reduce((s, r) => s + r.count, 0);
   return raw.map((r) => ({ ...r, percentage: Math.round((r.count / total) * 100) }));
 }
+
+export async function fetchDashboardAnalytics(): Promise<unknown> {
+  if (!USE_MOCKS) {
+    const res = await fetch(`${API_URL}/api/analytics/dashboard`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch dashboard: ${res.status}`);
+    }
+    return res.json();
+  }
+
+  // Mock dashboard data
+  const delay = Math.floor(Math.random() * 300) + 300;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
+  return {
+    category_distribution: generateCategoryPopularity().map((c) => ({
+      category: c.category,
+      contract_count: c.deployments,
+      total_views: c.views,
+    })),
+    network_usage: generateNetworkDistribution().map((n) => ({
+      network: n.network.toLowerCase(),
+      contract_count: n.count,
+      verified_count: Math.floor(n.count * 0.7),
+    })),
+    deployment_trends: generateSearchTrends(30).map((t) => ({
+      date: t.date,
+      count: Math.floor(t.searches / 10),
+    })),
+    top_publishers: [],
+    recent_additions: [],
+  };
+}
+
+export async function fetchTrendingContracts(limit = 10): Promise<Record<string, unknown>[]> {
+  if (!USE_MOCKS) {
+    const res = await fetch(`${API_URL}/api/contracts/trending?limit=${limit}`);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch trending: ${res.status}`);
+    }
+    const data = await res.json();
+    return data.trending || [];
+  }
+
+  // Mock trending data
+  const delay = Math.floor(Math.random() * 300) + 300;
+  await new Promise((resolve) => setTimeout(resolve, delay));
+
+  return [];
+}

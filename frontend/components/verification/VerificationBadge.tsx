@@ -1,17 +1,15 @@
 "use client";
 
-import { CheckCircle2, ShieldAlert, ShieldCheck, ShieldX } from "lucide-react";
-import type {
-  VerificationLevel,
-  VerificationStatus,
-} from "@/types/verification";
-import { useTranslation } from "@/lib/i18n/client";
-import type { TFunction } from "i18next";
+import React from 'react';
+import { CheckCircle2, Info, ShieldAlert, ShieldCheck, ShieldX } from 'lucide-react';
+import type { VerificationStatus } from '@/types/verification';
+import { useTranslation } from '@/lib/i18n/client';
+import type { TFunction } from 'i18next';
 
 function getBadgeConfig(
   status: VerificationStatus,
   t: TFunction,
-  level?: VerificationLevel,
+  level?: string,
 ): {
   label: string;
   className: string;
@@ -57,7 +55,7 @@ function getBadgeConfig(
 
 interface VerificationBadgeProps {
   status: VerificationStatus;
-  level?: VerificationLevel;
+  level?: any;
   size?: "sm" | "md";
 }
 
