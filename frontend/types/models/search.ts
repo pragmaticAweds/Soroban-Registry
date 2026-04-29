@@ -48,6 +48,32 @@ export interface SemanticContractSearchResponse extends PaginatedResponse<Contra
   semantic: SemanticSearchMetadata;
 }
 
+<<<<<<< HEAD
+/**
+ * Advanced query types for contract search
+ */
+
+export type FieldOperator =
+  | "eq"
+  | "ne"
+  | "gt"
+  | "lt"
+  | "in"
+  | "contains"
+  | "starts_with";
+
+export interface QueryCondition {
+  field: string;
+  operator: FieldOperator;
+  value: string | number | boolean | string[];
+}
+
+export type QueryOperator = "AND" | "OR";
+
+export type QueryNode =
+  | QueryCondition
+  | { operator: QueryOperator; conditions: QueryNode[] };
+=======
 export interface RecommendationReason {
   code: string;
   message: string;
@@ -76,3 +102,4 @@ export interface ContractRecommendationsResponse {
   generated_at: string;
   recommendations: RecommendedContract[];
 }
+>>>>>>> main

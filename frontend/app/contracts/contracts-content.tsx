@@ -1,24 +1,5 @@
 "use client";
 
-<<<<<<< HEAD
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { api, ContractSearchParams, Contract, SemanticContractSearchResponse } from '@/lib/api';
-import ContractCard from '@/components/ContractCard';
-import ContractCardSkeleton from '@/components/ContractCardSkeleton';
-import { ActiveFilters } from '@/components/contracts/ActiveFilters';
-import { FilterPanel } from '@/components/contracts/FilterPanel';
-import { ResultsCount } from '@/components/contracts/ResultsCount';
-import { SortDropdown } from '@/components/contracts/SortDropdown';
-import { SortBy, resolveInitialSortPreference } from './sort-utils';
-import TagAutocomplete from '@/components/tags/TagAutocomplete';
-import { Filter, Package, SlidersHorizontal, X, Sparkles, CheckCircle, Users, Search } from 'lucide-react';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useAnalytics } from '@/hooks/useAnalytics';
-import QueryBuilder from '@/components/contracts/QueryBuilder';
-import FavoriteSearches from '@/components/contracts/FavoriteSearches';
-import { SearchBar } from '@/components/contracts/SearchBar';
-=======
 import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type {
@@ -32,11 +13,13 @@ import ContractCardSkeleton from "@/components/ContractCardSkeleton";
 import { ActiveFilters } from "@/components/contracts/ActiveFilters";
 import { FilterPanel } from "@/components/contracts/FilterPanel";
 import { ResultsCount } from "@/components/contracts/ResultsCount";
+import { SearchBar } from "@/components/contracts/SearchBar";
 import { SortDropdown } from "@/components/contracts/SortDropdown";
 import TagAutocomplete from "@/components/tags/TagAutocomplete";
 import {
   Filter,
   Package,
+  Search,
   SlidersHorizontal,
   X,
   Sparkles,
@@ -54,7 +37,6 @@ import {
   resolveInitialSortPreference,
   type SortBy,
 } from "./sort-utils";
->>>>>>> main
 import {
   combineAdvancedQueryWithFilters,
   parseAdvancedContractQuery,
@@ -195,6 +177,16 @@ const EMPTY_CONTRACTS_RESPONSE: ContractsResponse = {
 const DEFAULT_SORT_BY: SortBy = DEFAULT_SORT_PREFERENCE.sort_by;
 const DEFAULT_SORT_ORDER: ContractsUiFilters["sort_order"] =
   DEFAULT_SORT_PREFERENCE.sort_order;
+const categoryOptions: FilterOption[] = CATEGORY_OPTIONS_NAMES.map((value) => ({
+  value,
+  label: value,
+  count: 0,
+}));
+const networkOptions: FilterOption[] = ALL_NETWORK_FILTERS.map((value) => ({
+  value,
+  label: value.charAt(0).toUpperCase() + value.slice(1),
+  count: 0,
+}));
 
 export function getInitialFilters(
   searchParams: URLSearchParams,
@@ -221,12 +213,8 @@ export function getInitialFilters(
     tags,
     author: searchParams.get("author") || "",
     networks,
-<<<<<<< HEAD
-    verified_only: searchParams.get('verified_only') === 'true',
-=======
     verified_only: searchParams.get("verified_only") === "true",
     favorites_only: searchParams.get("favorites_only") === "true",
->>>>>>> main
     sort_by: sortPreference.sort_by,
     sort_order: sortPreference.sort_order,
     page: Number.isFinite(parsedPage) && parsedPage > 0 ? parsedPage : 1,
@@ -385,6 +373,7 @@ export function ContractsContent() {
       useAdvancedSearch,
       verified_only,
       favorites_only,
+      favorites,
     ],
   );
 
@@ -454,7 +443,7 @@ export function ContractsContent() {
       effectiveData
         ? getPaginationRange(filters.page, effectiveData.total_pages)
         : [],
-    [filters.page, effectiveData?.total_pages],
+    [filters.page, effectiveData],
   );
 
   useEffect(() => {
@@ -625,16 +614,6 @@ export function ContractsContent() {
     return chips;
   }, [filters]);
 
-  const categoryOptions = useMemo(() =>
-    CATEGORY_OPTIONS_NAMES.map((name) => ({ value: name, label: name })),
-    []
-  );
-
-  const networkOptions = useMemo(() =>
-    ALL_NETWORK_FILTERS.map((network) => ({ value: network, label: network.charAt(0).toUpperCase() + network.slice(1) })),
-    []
-  );
-
   const filterPanelProps = {
     categories: categoryOptions,
     selectedCategories: filters.categories,
@@ -713,25 +692,11 @@ export function ContractsContent() {
             <div className="max-w-2xl mx-auto mb-10">
               <SearchBar
                 value={filters.query}
-<<<<<<< HEAD
                 onChange={(next: string) =>
                   setFilters((current) => ({ ...current, query: next, page: 1 }))
                 }
                 onClear={() => setFilters((current) => ({ ...current, query: '', page: 1 }))}
-                onCommit={(committed: string) => {
-=======
-                onChange={(next) =>
-                  setFilters((current) => ({
-                    ...current,
-                    query: next,
-                    page: 1,
-                  }))
-                }
-                onClear={() =>
-                  setFilters((current) => ({ ...current, query: "", page: 1 }))
-                }
                 onCommit={(committed) => {
->>>>>>> main
                   const parsed = parseAdvancedContractQuery(committed);
                   if (parsed.usesOr) {
                     setFilters((current) => ({
@@ -988,13 +953,8 @@ export function ContractsContent() {
                   No contracts found
                 </h3>
                 <p className="text-muted-foreground max-w-md mx-auto mb-6 text-sm">
-<<<<<<< HEAD
-                  We couldn&apos;t find any contracts matching your current filters. Try adjusting your
-                  search or clearing some filters.
-=======
-                  We couldn't find any contracts matching your current filters.
+                  We couldn&apos;t find any contracts matching your current filters.
                   Try adjusting your search or clearing some filters.
->>>>>>> main
                 </p>
                 <button
                   type="button"
