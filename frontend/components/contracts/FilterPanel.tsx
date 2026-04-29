@@ -332,7 +332,7 @@ export function FilterPanel({
         type="button"
         role="checkbox"
         aria-checked={favoritesOnly}
-        onClick={() => onFavoritesChange(!favoritesOnly)}
+        onClick={() => onFavoritesChange?.(!favoritesOnly)}
         className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-all ${
           favoritesOnly
             ? "bg-yellow-500/10 text-yellow-600 font-medium"
