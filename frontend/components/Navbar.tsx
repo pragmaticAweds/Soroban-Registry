@@ -183,7 +183,7 @@ function SearchModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void
 
 /* ─── Navbar ────────────────────────────────────────────────── */
 export default function Navbar() {
-    const { t, i18n } = useTranslation('');
+    const { t, i18n } = useTranslation('en');
     const lng = i18n.resolvedLanguage || 'en';
     const pathname = usePathname() ?? '';
     const scrolled = useScrolled();
@@ -552,7 +552,7 @@ export default function Navbar() {
                                 { href: '/developer', label: 'Contract IDE', icon: Code2 },
                             ].map(({ href, label, icon: Icon }) => (
                                 <Link
-                                    key={href}
+                                    key={`${href}-${label}`}
                                     href={href}
                                     onClick={() => setMobileOpen(false)}
                                     className={`flex items-center gap-2 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
