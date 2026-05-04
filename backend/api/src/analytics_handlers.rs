@@ -11,8 +11,9 @@
 //!                                       trending-by-category identification.
 
 use axum::{
-    extract::{Path, State},
-    http::StatusCode,
+    extract::{Path, Query, State},
+    http::{header, HeaderValue, StatusCode},
+    response::Response,
     Json,
 };
 use chrono::{Datelike, Duration, NaiveDate, Utc};
@@ -39,7 +40,7 @@ pub struct TrendPoint {
 }
 
 /// Enhanced per-contract analytics response (issue #725).
-#[derive(Debug, Serialize, utoipa::ToSchema)]
+#[derive(Debug, Serialize, Deserialize, utoipa::ToSchema)]
 pub struct ContractAnalyticsResponse {
     pub contract_id: String,
     /// Total number of times this contract's profile page has been viewed.
@@ -299,7 +300,7 @@ pub async fn get_contract_analytics(
     State(state): State<AppState>,
     Path(id): Path<String>,
     Query(query): Query<ContractAnalyticsQuery>,
-) -> Response {
+) -> axum::response::Response {
     match get_contract_analytics_inner(state, id, query).await {
         Ok(r) => r,
         Err(e) => e.into_response(),
@@ -310,7 +311,7 @@ async fn get_contract_analytics_inner(
     state: AppState,
     id: String,
     query: ContractAnalyticsQuery,
-) -> ApiResult<Response> {
+) -> ApiResult<axum::response::Response> {
     // ── Validate & resolve time range ─────────────────────────────────────────
     let to_date = query.to_date.unwrap_or_else(|| Utc::now().date_naive());
     let from_date = query
@@ -601,7 +602,10 @@ async fn get_contract_analytics_inner(
     build_analytics_response(resp, &format)
 }
 
-fn build_analytics_response(resp: ContractAnalyticsResponse, format: &str) -> ApiResult<Response> {
+fn build_analytics_response(
+    resp: ContractAnalyticsResponse,
+    format: &str,
+) -> ApiResult<axum::response::Response> {
     if format == "csv" {
         let csv = render_analytics_csv(&resp);
         let body = axum::body::Body::from(csv);
@@ -1254,7 +1258,7 @@ pub async fn get_analytics_dashboard(
           AND ($3::BOOL IS NULL OR c.is_verified = $3)
         "#,
     )
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_one(&state.db)
@@ -1275,7 +1279,7 @@ pub async fn get_analytics_dashboard(
     )
     .bind(start_date)
     .bind(end_date)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_one(&state.db)
@@ -1296,7 +1300,7 @@ pub async fn get_analytics_dashboard(
     )
     .bind(month_start)
     .bind(end_date)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_one(&state.db)
@@ -1323,7 +1327,7 @@ pub async fn get_analytics_dashboard(
             "#,
     )
     .bind(limit)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_all(&state.db)
@@ -1356,7 +1360,7 @@ pub async fn get_analytics_dashboard(
         ORDER  BY count DESC
         "#,
     )
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_all(&state.db)
@@ -1382,7 +1386,7 @@ pub async fn get_analytics_dashboard(
         LIMIT  10
         "#,
     )
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_all(&state.db)
@@ -1427,7 +1431,7 @@ pub async fn get_analytics_dashboard(
     )
     .bind(start_date)
     .bind(end_date)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_all(&state.db)
@@ -1464,7 +1468,7 @@ pub async fn get_analytics_dashboard(
     )
     .bind(start_date)
     .bind(end_date)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .fetch_all(&state.db)
@@ -1500,7 +1504,7 @@ pub async fn get_analytics_dashboard(
     )
     .bind(start_date)
     .bind(end_date)
-    .bind(params.network)
+    .bind(params.network.clone())
     .bind(params.category.as_deref())
     .bind(params.verified)
     .bind(top_limit)

@@ -207,7 +207,7 @@ impl FromRequestParts<AppState> for AuthenticatedUser {
     async fn from_request_parts(
         parts: &mut Parts,
         state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
+    ) -> Result<Self, ApiError> {
         let auth_header = parts
             .headers
             .get(header::AUTHORIZATION)
@@ -250,7 +250,7 @@ impl FromRequestParts<AppState> for AuthClaims {
     async fn from_request_parts(
         parts: &mut Parts,
         _state: &AppState,
-    ) -> Result<Self, Self::Rejection> {
+    ) -> Result<Self, ApiError> {
         let auth_header = parts
             .headers
             .get(header::AUTHORIZATION)

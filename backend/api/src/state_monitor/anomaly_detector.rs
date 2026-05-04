@@ -76,6 +76,7 @@ impl AnomalyDetector {
 }
 
 // Anomaly rule trait
+#[async_trait::async_trait]
 trait AnomalyRule: Send + Sync {
     fn name(&self) -> &'static str;
     async fn check(&self, change: &StateChangeEntry, db: &PgPool) -> Result<Option<AnomalyRecord>>;
@@ -96,6 +97,7 @@ impl SuddenSpikeRule {
     }
 }
 
+#[async_trait::async_trait]
 impl AnomalyRule for SuddenSpikeRule {
     fn name(&self) -> &'static str {
         "sudden_spike"
@@ -163,6 +165,7 @@ impl UnusualPatternRule {
     }
 }
 
+#[async_trait::async_trait]
 impl AnomalyRule for UnusualPatternRule {
     fn name(&self) -> &'static str {
         "unusual_pattern"
@@ -215,6 +218,7 @@ impl UnexpectedValueChangeRule {
     }
 }
 
+#[async_trait::async_trait]
 impl AnomalyRule for UnexpectedValueChangeRule {
     fn name(&self) -> &'static str {
         "unexpected_value_change"

@@ -1,16 +1,18 @@
 #[cfg(feature = "openapi")]
 use crate::openapi;
 use crate::{
-    ab_test_handlers, ai::handlers as ai_handlers, analytics_handlers, auth, auth_handlers,
-    batch_verify_handlers, breaking_changes, bulk_operations_handlers, canary_handlers, category_handlers,
-    client_observability_handlers, clone_federation_handlers, compatibility_testing_handlers,
-    contract_events, custom_metrics_handlers, deprecation_handlers, error_logging,
-    formal_verification_handlers, gas_estimation_handlers, governance_handlers,
-    graph_analysis_handlers, handlers, interoperability_handlers, metrics_handler,
-    migration_handlers, mutation_testing_handlers, org_handlers, patch_handlers,
-    performance_handlers, plugin_marketplace_handlers, publisher_verification_handlers,
-    recommendation_handlers, resource_handlers, security_scan_handlers, similarity_handlers,
-    simulation_handlers, state::AppState, state_monitor::handlers as state_monitor_handlers, stats,
+    ab_test_handlers, abi_versioning_handlers, ai::handlers as ai_handlers,
+    analytics_handlers, auth, auth_handlers, batch_verify_handlers, breaking_changes,
+    bulk_operations_handlers, canary_handlers, category_handlers, client_observability_handlers,
+    clone_federation_handlers, collaborative_reviews, compatibility_testing_handlers,
+    contract_events, contract_stats_handlers, contributor_handlers, custom_metrics_handlers,
+    deprecation_handlers, dependency_handlers, error_logging, formal_verification_handlers,
+    gas_estimation_handlers, governance_handlers, graph_analysis_handlers, handlers,
+    interoperability_handlers, metrics_handler, migration_handlers, mutation_testing_handlers,
+    org_handlers, patch_handlers, performance_handlers, plugin_marketplace_handlers,
+    publisher_verification_handlers, recommendation_handlers, resource_handlers,
+    search_postgres, security_scan_handlers, similarity_handlers, simulation_handlers,
+    state::AppState, state_monitor::handlers as state_monitor_handlers, stats,
     subscription_handlers, verification_handlers, websocket, zk_proof_handlers,
 };
 
