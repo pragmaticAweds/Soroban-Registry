@@ -106,6 +106,13 @@ pub async fn clone_contract(
         .await
         .map_err(|err| db_internal_error("begin transaction", err))?;
 
+    // Resolve tags: map Vec<Tag> -> Vec<String> for sqlx binding
+    let tags_strings: Vec<String> = req
+        .tags
+        .as_ref()
+        .map(|tags| tags.iter().map(|t| t.to_string()).collect())
+        .unwrap_or_else(|| original.tags.iter().map(|t| t.to_string()).collect());
+
     // Insert the cloned contract
     let clone: Contract = sqlx::query_as(
         r#"
@@ -128,7 +135,7 @@ pub async fn clone_contract(
     .bind(publisher_id)
     .bind(&target_network)
     .bind(req.category.as_deref().or(original.category.as_deref()))
-    .bind(req.tags.as_deref().unwrap_or(&original.tags))
+    .bind(&tags_strings as &[String])
     .bind(original.id)
     .bind(original.logical_id)
     .bind(&original.network_configs)
@@ -137,10 +144,10 @@ pub async fn clone_contract(
     .map_err(|err| db_internal_error("insert cloned contract", err))?;
 
     // Copy ABI from original contract
-    let abi_copied = copy_contract_abi(&mut *tx, original.id, clone.id).await?;
+    let abi_copied = copy_contract_abi(&mut tx, original.id, clone.id).await?;
 
     // Copy contract versions
-    copy_contract_versions(&mut *tx, original.id, clone.id).await?;
+    copy_contract_versions(&mut tx, original.id, clone.id).await?;
 
     // Record clone history
     let metadata_overrides = json!({
@@ -190,7 +197,8 @@ pub async fn clone_contract(
 
     write_contract_audit_log(
         &state.db,
-        AuditActionType::ContractCreated,
+        // FIX: use the correct variant name from shared::AuditActionType
+        AuditActionType::Create,
         clone.id,
         publisher_id,
         changes,
@@ -536,7 +544,7 @@ pub async fn discover_federated_registries(
             .await
             .map_err(|err| db_internal_error("discover registries", err))?;
 
-    let summaries = registries
+    let summaries: Vec<FederatedRegistrySummary> = registries
         .into_iter()
         .map(|r| FederatedRegistrySummary {
             id: r.id,
@@ -548,9 +556,11 @@ pub async fn discover_federated_registries(
         })
         .collect();
 
+    // FIX: capture total_count before moving summaries into the struct
+    let total_count = summaries.len() as i64;
     Ok(Json(FederationDiscoveryResponse {
         registries: summaries,
-        total_count: summaries.len() as i64,
+        total_count,
         discovered_at: chrono::Utc::now(),
     }))
 }
@@ -786,15 +796,22 @@ async fn perform_federation_sync(db: PgPool, job_id: Uuid, registry_id: Uuid, ba
         batch_size
     );
 
-    let result = async {
+    // FIX: use Result<_, String> with explicit .map_err(|e| e.to_string()) so
+    // reqwest::Error converts to String (the only From impl available here).
+    let result: Result<serde_json::Value, String> = async {
         let mut headers = reqwest::header::HeaderMap::new();
         crate::request_tracing::inject_current_trace_context(&mut headers);
-        let response = client.get(&sync_url).headers(headers).send().await?;
+        let response = client
+            .get(&sync_url)
+            .headers(headers)
+            .send()
+            .await
+            .map_err(|e| e.to_string())?;
         if !response.status().is_success() {
             return Err(format!("Failed to fetch contracts: {}", response.status()));
         }
-
-        let contracts: serde_json::Value = response.json().await?;
+        let contracts: serde_json::Value =
+            response.json().await.map_err(|e| e.to_string())?;
         Ok(contracts)
     }
     .await;
