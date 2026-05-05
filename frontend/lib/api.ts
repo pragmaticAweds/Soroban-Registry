@@ -23,6 +23,7 @@ import {
   extractErrorData,
   createApiError,
 } from "./errors";
+import { fetchAnalytics } from "./api/analytics";
 
 export type Network = "mainnet" | "testnet" | "futurenet";
 
@@ -1307,6 +1308,8 @@ export const api = {
   fetchContractVersions,
   getContractVersions: fetchContractVersions,
   fetchContractAbi,
+  fetchAnalytics,
+  getStats: fetchStats,
   getContractAbi: fetchContractAbi,
   fetchContractChangelog,
   getContractChangelog: fetchContractChangelog,
