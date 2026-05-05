@@ -19,6 +19,7 @@ path = "src/main.rs"
 
 [dependencies]
 shared = { path = "../shared" }
+contract_abi = { path = "../contract_abi" }
 verifier = { path = "../verifier" }
 soroban-batch = { path = "../../soroban-registry/crates/soroban-batch" }
 axum = { workspace = true, features = ["ws"] }
@@ -64,7 +65,6 @@ regex = "1.10"
 lazy_static = "1.4"
 wasmparser = { workspace = true }
 difference = "2.0"
-contract_abi = { path = "../contract_abi" }
 rust_decimal = { workspace = true }
 redis = { version = "0.25", features = ["tokio-rustls-comp", "json", "connection-manager", "tokio-comp"] }
 utoipa = { workspace = true }

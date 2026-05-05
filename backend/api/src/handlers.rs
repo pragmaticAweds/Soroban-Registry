@@ -16,11 +16,10 @@ use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use once_cell::sync::Lazy;
 use serde_json::{json, Value};
-use shared::source_storage::SourceFormat;
+use shared::models::SourceFormat;
 use shared::{
     pagination::Cursor, AdvancedSearchRequest, AnalyticsEventType, AuditActionType,
-    ChangePublisherRequest, Contract, ContractAuditLog, ContractChangelogEntry,
-    ContractChangelogResponse, ContractDeploymentHistory, ContractExportAcceptedResponse,
+    ChangePublisherRequest, Contract, ContractAuditLog, ContractDeploymentHistory, ContractExportAcceptedResponse,
     ContractExportFormat, ContractExportJobStatus, ContractExportMetadata, ContractExportRequest,
     ContractExportStatusResponse, ContractGetResponse, ContractInteractionResponse,
     ContractMetadataExportEnvelope, ContractMetadataExportRecord, ContractSearchParams,
@@ -60,23 +59,32 @@ pub struct BatchContractsQuery {
     pub fields: Option<String>,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct ContractStatsResponse {
+    pub contract_id: Uuid,
+    pub usage_count: i64,
+    pub last_accessed_at: Option<chrono::DateTime<chrono::Utc>>,
+}
+
 use crate::{
     analytics,
     auth::AuthClaims,
     breaking_changes::{diff_abi, has_breaking_changes, resolve_abi},
-    contract_events::{ContractEventEnvelope, ContractEventVisibility},
+    contract_events::ContractEventEnvelope,
     dependency,
     error::{ApiError, ApiResult},
-    models::ContractSourceResponse,
     onchain_verification::OnChainVerifier,
-    state::AppState,
-    type_safety::parser::parse_json_spec,
-    type_safety::{generate_openapi, to_json, to_yaml},
+    state::{AppState, ContractEventVisibility},
+    contract_abi::{generate_openapi, parse_json_spec, to_json, to_yaml},
 };
 
 pub(crate) fn db_internal_error(operation: &str, err: sqlx::Error) -> ApiError {
     tracing::error!(operation = operation, error = ?err, "database operation failed");
     ApiError::internal("An unexpected database error occurred")
+}
+
+fn maturity_filter_value<T: ToString>(maturity: T) -> String {
+    maturity.to_string()
 }
 
 pub(crate) async fn fetch_contract_identity(
@@ -234,7 +242,7 @@ fn contract_timestamp_for_sort(
     }
 }
 
-async fn track_contract_access(state: &AppState, contract_id: Uuid) {
+pub(crate) async fn track_contract_access(state: &AppState, contract_id: Uuid) {
     let cache_key = contract_id.to_string();
     if !state.cache.should_refresh_contract_access(&cache_key).await {
         return;
@@ -2904,6 +2912,23 @@ pub struct ContractSourceResponse {
     pub created_at: chrono::DateTime<chrono::Utc>,
 }
 
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct ContractChangelogEntry {
+    pub version: String,
+    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub commit_hash: Option<String>,
+    pub source_url: Option<String>,
+    pub release_notes: Option<String>,
+    pub breaking: bool,
+    pub breaking_changes: Vec<String>,
+}
+
+#[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::ToSchema)]
+pub struct ContractChangelogResponse {
+    pub contract_id: Uuid,
+    pub entries: Vec<ContractChangelogEntry>,
+}
+
 #[derive(Debug, serde::Serialize, serde::Deserialize, utoipa::IntoParams)]
 pub struct ContractSourceQuery {
     #[serde(default)]
@@ -3287,11 +3312,11 @@ pub async fn get_contract_changelog(
             let old_abi = resolve_abi(&state, &old_selector, false).await?;
             let new_abi = resolve_abi(&state, &new_selector, false).await?;
 
-            let old_spec = crate::type_safety::parser::parse_json_spec(&old_abi, &old_selector)
+            let old_spec = contract_abi::parser::parse_json_spec(&old_abi, &old_selector)
                 .map_err(|e| {
                     ApiError::bad_request("InvalidABI", format!("Failed to parse old ABI: {}", e))
                 })?;
-            let new_spec = crate::type_safety::parser::parse_json_spec(&new_abi, &new_selector)
+            let new_spec = contract_abi::parser::parse_json_spec(&new_abi, &new_selector)
                 .map_err(|e| {
                     ApiError::bad_request("InvalidABI", format!("Failed to parse new ABI: {}", e))
                 })?;
@@ -3473,13 +3498,13 @@ pub async fn create_contract_version(
         if let Some(old_version) = latest_version {
             let old_selector = format!("{}@{}", contract_id, old_version);
             let old_abi = resolve_abi(&state, &old_selector, false).await?;
-            let old_spec = crate::type_safety::parser::parse_json_spec(&old_abi, &contract_id)
+            let old_spec = contract_abi::parser::parse_json_spec(&old_abi, &contract_id)
                 .map_err(|e| {
                     ApiError::bad_request("InvalidABI", format!("Failed to parse old ABI: {}", e))
                 })?;
 
             let new_spec =
-                crate::type_safety::parser::parse_json_spec(&req.abi.to_string(), &contract_id)
+                contract_abi::parser::parse_json_spec(&req.abi.to_string(), &contract_id)
                     .map_err(|e| {
                         ApiError::bad_request(
                             "InvalidABI",

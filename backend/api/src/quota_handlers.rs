@@ -92,4 +92,11 @@ fn extract_ip(request: &Request) -> String {
 fn _assert_status_unused() {
     let _ = StatusCode::OK;
     let _ = ApiError::not_found("", "");
+
+pub fn quota_routes() -> axum::Router<AppState> {
+    use axum::routing::get;
+    
+    axum::Router::new()
+        .route("/api/quota", get(get_quota))
+}
 }

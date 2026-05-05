@@ -5,6 +5,7 @@ use opentelemetry::KeyValue;
 use opentelemetry_otlp::WithExportConfig;
 use opentelemetry_sdk::propagation::TraceContextPropagator;
 use opentelemetry_sdk::Resource;
+use std::borrow::Cow;
 
 pub fn init_tracing(service_name: &str) {
     use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -42,7 +43,7 @@ pub fn init_tracing(service_name: &str) {
             .install_batch(opentelemetry_sdk::runtime::Tokio)
         {
             Ok(provider) => {
-                let tracer = provider.tracer(&tracer_name);
+                let tracer = provider.tracer(Cow::Owned(tracer_name));
                 tracing_subscriber::registry()
                     .with(env_filter)
                     .with(fmt_layer)

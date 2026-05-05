@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 use crate::{
     error::{ApiError, ApiResult},
-    type_safety::parser::parse_json_spec,
+    contract_abi::parser::parse_json_spec,
 };
 
 #[derive(Debug, Clone, FromRow)]

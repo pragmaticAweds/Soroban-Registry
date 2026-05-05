@@ -50,8 +50,8 @@ impl EventListener {
     }
 
     /// Unsubscribe a contract
-    pub fn unsubscribe_contract(&self, contract_id: &str, _network: &str) -> Result<()> {
-        let mut contracts = futures::executor::block_on(self.monitored_contracts.write());
+    pub async fn unsubscribe_contract(&self, contract_id: &str, _network: &str) -> Result<()> {
+        let mut contracts = self.monitored_contracts.write().await;
         contracts.remove(contract_id);
 
         info!(

@@ -11,6 +11,8 @@ use std::fmt;
 use uuid::Uuid;
 
 use crate::{error::ApiError, state::AppState};
+use axum::extract::FromRequestParts;
+use axum::http::request::Parts;
 
 pub const MIN_JWT_SECRET_LEN: usize = 32;
 

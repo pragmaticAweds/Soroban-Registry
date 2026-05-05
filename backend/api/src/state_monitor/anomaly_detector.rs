@@ -125,7 +125,7 @@ impl AnomalyRule for SuddenSpikeRule {
                     .fetch_one(db)
                     .await?;
 
-                    if count >= self.min_occurrences {
+                    if count >= i64::from(self.min_occurrences) {
                         return Ok(Some(AnomalyRecord {
                             contract_id: change.contract_id,
                             anomaly_type: "sudden_spike".to_string(),
@@ -182,7 +182,7 @@ impl AnomalyRule for UnusualPatternRule {
         .fetch_one(db)
         .await?;
 
-        if count > self.max_changes_per_minute {
+        if count > i64::from(self.max_changes_per_minute) {
             return Ok(Some(AnomalyRecord {
                 contract_id: change.contract_id,
                 anomaly_type: "high_frequency_changes".to_string(),

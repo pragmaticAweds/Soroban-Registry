@@ -13,11 +13,7 @@ use axum::{
     Json,
 };
 use chrono::{Duration, NaiveDate, Utc};
-use serde::Deserialize;
-use shared::{
-    ContractStatsTimeSeriesResponse, ContractUsageStats, StatsPeriod, StatsTimeSeriesPoint,
-    TrendingContractStats, TrendingContractsResponse,
-};
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
@@ -43,6 +39,106 @@ pub struct TrendingQuery {
     pub period: Option<String>,
     /// Maximum number of results (default: 20)
     pub limit: Option<i64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+pub enum StatsPeriod {
+    SevenDays,
+    ThirtyDays,
+    NinetyDays,
+}
+
+impl StatsPeriod {
+    fn days(&self) -> i64 {
+        match self {
+            Self::SevenDays => 7,
+            Self::ThirtyDays => 30,
+            Self::NinetyDays => 90,
+        }
+    }
+
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::SevenDays => "7d",
+            Self::ThirtyDays => "30d",
+            Self::NinetyDays => "90d",
+        }
+    }
+}
+
+impl std::str::FromStr for StatsPeriod {
+    type Err = String;
+
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        match value {
+            "7d" => Ok(Self::SevenDays),
+            "30d" => Ok(Self::ThirtyDays),
+            "90d" => Ok(Self::NinetyDays),
+            _ => Err("period must be one of: 7d, 30d, 90d".to_string()),
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContractUsageStats {
+    pub contract_id: Uuid,
+    pub contract_name: String,
+    pub period: String,
+    pub period_start: NaiveDate,
+    pub period_end: NaiveDate,
+    pub deployment_count: i64,
+    pub call_count: i64,
+    pub error_count: i64,
+    pub unique_callers: i64,
+    pub unique_deployers: i64,
+    pub total_interactions: i64,
+    pub avg_calls_per_day: f64,
+    pub error_rate: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StatsTimeSeriesPoint {
+    pub date: NaiveDate,
+    pub deployments: i64,
+    pub calls: i64,
+    pub errors: i64,
+    pub total: i64,
+    pub unique_callers: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ContractStatsTimeSeriesResponse {
+    pub contract_id: Uuid,
+    pub contract_name: String,
+    pub period: String,
+    pub period_start: NaiveDate,
+    pub period_end: NaiveDate,
+    pub series: Vec<StatsTimeSeriesPoint>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrendingContractStats {
+    pub contract_id: Uuid,
+    pub name: String,
+    pub network: String,
+    pub category: Option<String>,
+    pub is_verified: bool,
+    pub interactions_7d: i64,
+    pub interactions_30d: i64,
+    pub interactions_90d: i64,
+    pub deployments_7d: i64,
+    pub errors_7d: i64,
+    pub unique_callers_7d: i64,
+    pub trending_score: f64,
+    pub rank: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct TrendingContractsResponse {
+    pub period: String,
+    pub total: i64,
+    pub contracts: Vec<TrendingContractStats>,
+    pub generated_at: chrono::DateTime<chrono::Utc>,
 }
 
 // ── Handlers ─────────────────────────────────────────────────────────────────

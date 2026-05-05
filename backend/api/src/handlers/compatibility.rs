@@ -15,8 +15,8 @@ use crate::{
     breaking_changes::{diff_abi, has_breaking_changes, resolve_abi, ChangeSeverity},
     error::{ApiError, ApiResult},
     state::AppState,
-    type_safety::parser::parse_json_spec,
 };
+use contract_abi::parser::parse_json_spec;
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 struct ContractVersionRecord {

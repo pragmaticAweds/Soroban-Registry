@@ -11,7 +11,7 @@ use stellar_xdr::curr::{
 };
 
 use crate::cache::CacheLayer;
-use crate::type_safety::parser::parse_json_spec;
+use contract_abi::parser::parse_json_spec;
 
 const DEFAULT_RPC_MAINNET: &str = "https://mainnet.sorobanrpc.com";
 const DEFAULT_RPC_TESTNET: &str = "https://soroban-testnet.stellar.org";

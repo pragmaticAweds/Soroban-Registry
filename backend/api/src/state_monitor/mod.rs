@@ -31,7 +31,7 @@ impl StateMonitorService {
         db: PgPool,
         event_broadcaster: broadcast::Sender<crate::state::RealtimeEvent>,
     ) -> Result<Self, anyhow::Error> {
-        let anomaly_detector = AnomalyDetector::new(db.clone());
+        let anomaly_detector = Arc::new(AnomalyDetector::new(db.clone()));
         let event_listener = EventListener::new(
             db.clone(),
             event_broadcaster.clone(),
@@ -42,7 +42,7 @@ impl StateMonitorService {
             db,
             event_broadcaster,
             event_listener: Arc::new(event_listener),
-            anomaly_detector: Arc::new(anomaly_detector),
+            anomaly_detector,
         })
     }
 
@@ -72,6 +72,7 @@ impl StateMonitorService {
     ) -> Result<(), anyhow::Error> {
         self.event_listener
             .unsubscribe_contract(contract_id, network)
+            .await
     }
 
     /// Get recent state changes for a contract

@@ -10,7 +10,7 @@ use uuid::Uuid;
 
 use crate::error::ApiError;
 use crate::state::AppState;
-use axum::{extract::State, Json};
+use axum::{extract::{Query, State}, Json};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SearchQuery {
@@ -99,8 +99,8 @@ impl PostgresSearchService {
 
         // Add filters
         let mut param_index = 2;
-        let mut args: Vec<Box<dyn sqlx::postgres::PgArgumentValue + Send>> = Vec::new();
-        args.push(Box::new(query.query.clone()));
+        let mut args: Vec<String> = Vec::new();
+        args.push(query.query.clone());
 
         if let Some(ref cats) = query.categories {
             if !cats.is_empty() {
@@ -124,11 +124,11 @@ impl PostgresSearchService {
                     .map(|i| format!("${}", i))
                     .collect();
                 sql.push_str(&format!(
-                    " AND c.network = ANY(ARRAY[{}, {}]::network_type[])",
+                    " AND c.network = ANY(ARRAY[{}]::network_type[])",
                     placeholders.join(", ")
                 ));
                 for net in nets {
-                    args.push(Box::new(net.to_string()));
+                    args.push(net.to_string());
                     param_index += 1;
                 }
             }
@@ -144,7 +144,7 @@ impl PostgresSearchService {
                 sql.push_str(&param_index.to_string());
                 sql.push_str("))");
                 let tag_array = tags.clone();
-                args.push(Box::new(tag_array));
+                args.push(tag_array);
                 param_index += 1;
             }
         }
@@ -159,8 +159,8 @@ impl PostgresSearchService {
             param_index,
             param_index + 1
         ));
-        args.push(Box::new(limit));
-        args.push(Box::new(offset));
+        args.push(limit.to_string());
+        args.push(offset.to_string());
 
         // Count total for pagination
         let count_sql = format!(
@@ -171,15 +171,16 @@ impl PostgresSearchService {
         // Execute search query
         let mut query_builder = sqlx::query_as::<_, ContractSearchRow>(&sql);
         for arg in &args {
-            query_builder = query_builder.bind(arg.as_ref());
+            query_builder = query_builder.bind(arg);
         }
 
         let rows = query_builder.fetch_all(&self.db).await?;
 
-        let total = sqlx::query_scalar::<_, i64>(&count_sql)
-            .bind_all(args.iter().take(args.len() - 2)) // exclude limit/offset for count
-            .fetch_one(&self.db)
-            .await?;
+        let mut count_query = sqlx::query_scalar::<_, i64>(&count_sql);
+        for arg in args.iter().take(args.len() - 2) {
+            count_query = count_query.bind(arg);
+        }
+        let total = count_query.fetch_one(&self.db).await?;
 
         let took = start_time.elapsed().as_millis() as u64;
 

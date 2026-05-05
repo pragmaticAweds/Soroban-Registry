@@ -73,14 +73,6 @@ pub fn application_routes(schema: crate::graphql::schema::RegistrySchema) -> Rou
         .merge(quota_routes())
         .merge(validator_routes())
         .merge(openapi_routes())
-        .route(
-            "/api/graphql",
-            axum::routing::post(crate::graphql::graphql_handler).with_state(schema),
-        )
-        .route(
-            "/api/graphql/playground",
-            axum::routing::get(crate::graphql::graphql_playground),
-        )
         .nest("/api", crate::activity_feed_routes::routes())
 }
 
@@ -123,6 +115,10 @@ pub fn auth_routes() -> Router<AppState> {
 
 pub fn validator_routes() -> Router<AppState> {
     Router::new()
+}
+
+pub fn quota_routes() -> Router<AppState> {
+    Router::new().route("/api/quota", get(crate::quota_handlers::get_quota))
 }
 
 pub fn plugin_routes() -> Router<AppState> {

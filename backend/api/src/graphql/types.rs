@@ -6,12 +6,14 @@ use rust_decimal::prelude::ToPrimitive;
 use rust_decimal::Decimal;
 use serde_json::Value;
 use shared::models::{
-    AlertSeverity, AuditActionType, Contract, ContractAuditLog, ContractChangelogEntry,
+    AlertSeverity, AuditActionType, Contract, ContractAuditLog,
     ContractInteraction, ContractPerformanceSummaryResponse, ContractVersion, DependencyNode,
     DependencyResponse, MetricType, Network, Organization, PerformanceAlert, PerformanceBenchmark,
     PerformanceMetricSnapshot, PerformanceRegression, PerformanceTrendPoint, Publisher,
     VisibilityType,
 };
+
+use crate::handlers::ContractChangelogEntry;
 use uuid::Uuid;
 
 use crate::state::AppState;

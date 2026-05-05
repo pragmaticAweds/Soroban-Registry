@@ -19,8 +19,8 @@ use crate::{
     breaking_changes::{diff_abi, ChangeSeverity},
     error::{ApiError, ApiResult},
     state::AppState,
-    type_safety::parser::parse_json_spec,
 };
+use contract_abi::parser::parse_json_spec;
 
 // ── Shared DB row ──────────────────────────────────────────────────────────
 

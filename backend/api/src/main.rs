@@ -76,7 +76,6 @@ mod similarity_handlers;
 mod simulation;
 mod simulation_handlers;
 mod subscription_handlers;
-mod type_safety;
 mod usage_counter;
 mod validation;
 mod verification_handlers;

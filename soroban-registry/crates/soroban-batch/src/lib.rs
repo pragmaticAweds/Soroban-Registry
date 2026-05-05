@@ -11,7 +11,7 @@ pub mod engine;
 pub enum OperationType {
     Publish,
     Verify,
-    UpdateMetadata,
+    UpdateMetadata, 
     SetNetwork,
     Retire,
 }

@@ -1,8 +1,10 @@
 use crate::analytics_handlers;
 use crate::breaking_changes;
+use crate::contract_stats_handlers;
 use crate::custom_metrics_handlers;
 use crate::deprecation_handlers;
 use crate::handlers;
+use crate::handlers::{ContractChangelogEntry, ContractChangelogResponse};
 use crate::interoperability_handlers;
 use crate::metrics_handler;
 use crate::recommendation_handlers;

@@ -8,9 +8,8 @@ use uuid::Uuid;
 
 use crate::error::{ApiError, ApiResult};
 use crate::state::AppState;
-use crate::type_safety::parser::parse_json_spec;
-use crate::type_safety::types::{
-    ContractABI, ContractFunction, EnumVariant, SorobanType, StructField,
+use contract_abi::{
+    self, parser::parse_json_spec, ContractABI, ContractFunction, EnumVariant, SorobanType, StructField,
 };
 
 #[derive(Debug, Serialize, Clone, Copy, PartialEq, Eq, utoipa::ToSchema)]
@@ -511,9 +510,7 @@ pub fn has_breaking_changes(changes: &[BreakingChange]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::type_safety::types::{
-        ContractABI, ContractFunction, FunctionParam, FunctionVisibility,
-    };
+    use contract_abi::{ContractABI, ContractFunction, FunctionParam, FunctionVisibility};
 
     fn func(name: &str, params: Vec<FunctionParam>, return_type: SorobanType) -> ContractFunction {
         ContractFunction {

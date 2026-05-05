@@ -1,8 +1,9 @@
 use crate::state::AppState;
-use axum::{extract::State, Json};
+use axum::{extract::{Query, State}, Json};
 use serde::{Deserialize, Serialize};
 use shared::models::Network;
 use sqlx::PgPool;
+use crate::error::ApiError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct RegistryStats {
@@ -45,6 +46,7 @@ pub struct TopContract {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct NetworkStats {
+    #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
     pub network: Network,
     pub contract_count: i64,
     pub verified_count: i64,
@@ -56,6 +58,7 @@ pub struct NetworkStats {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct CategoryStats {
     pub category: String,
+    #[derive(Debug, Serialize, Deserialize, sqlx::FromRow)]
     pub contract_count: i64,
     pub verified_count: i64,
     pub verification_rate: f64,

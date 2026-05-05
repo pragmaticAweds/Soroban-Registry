@@ -14,6 +14,7 @@ use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::sync::Arc;
+use tracing::warn;
 use uuid::Uuid;
 
 // Request/Response types for AI endpoints
@@ -63,7 +64,7 @@ pub struct SuggestResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionResponse {
     pub session: ChatSession,
-    pub messages: Vec<crate::ai::models::ChatMessage>,
+    pub messages: Vec<ChatMessage>,
 }
 
 /// AI Chat handler - general Q&A

@@ -617,7 +617,7 @@ pub async fn get_performance_summary(
     Path(contract_id): Path<String>,
 ) -> ApiResult<Json<ContractPerformanceSummaryResponse>> {
     let contract_uuid = parse_uuid(&contract_id, "contract")?;
-    let summary = build_performance_summary(&state, contract_uuid).await?;
+    let summary = build_performance_summary_internal(&state, contract_uuid).await?;
     Ok(Json(summary))
 }
 
