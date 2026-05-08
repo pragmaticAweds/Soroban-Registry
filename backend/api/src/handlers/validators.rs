@@ -6,15 +6,85 @@ use axum::{
     Json,
 };
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use chrono::{DateTime, Utc};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use rust_decimal::Decimal;
-use shared::{
-    Attestation, AttestationDecision, RegisterValidatorRequest, SubmitAttestationRequest,
-    Validator, ValidatorNetworkStatus, ValidatorPerformance, VerificationTask,
-    VerificationTaskStatus,
-};
+use serde::{Deserialize, Serialize};
+use sqlx::FromRow;
 use stellar_strkey::ed25519::PublicKey as StrKeyPublicKey;
 use uuid::Uuid;
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+pub struct Validator {
+    pub id: Uuid,
+    pub stellar_address: String,
+    pub name: Option<String>,
+    pub status: String,
+    pub stake_amount: Decimal,
+    pub reputation_score: i32,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+pub struct ValidatorPerformance {
+    pub validator_id: Uuid,
+    pub total_verifications: i32,
+    pub successful_verifications: i32,
+    pub failed_verifications: i32,
+    pub slashed_count: i32,
+    pub last_active_at: Option<DateTime<Utc>>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+pub struct VerificationTask {
+    pub id: Uuid,
+    pub contract_id: Uuid,
+    pub version: String,
+    pub status: String,
+    pub assigned_to: Option<Uuid>,
+    pub expires_at: Option<DateTime<Utc>>,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, FromRow, utoipa::ToSchema)]
+pub struct Attestation {
+    pub id: Uuid,
+    pub task_id: Uuid,
+    pub validator_id: Uuid,
+    pub decision: String,
+    pub compiled_wasm_hash: Option<String>,
+    pub error_message: Option<String>,
+    pub signature: Option<String>,
+    pub created_at: DateTime<Utc>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct ValidatorNetworkStatus {
+    pub total_validators: i64,
+    pub active_validators: i64,
+    pub pending_tasks: i64,
+    pub completed_verifications: i64,
+    pub total_staked_amount: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct RegisterValidatorRequest {
+    pub stellar_address: String,
+    pub name: String,
+    pub stake_amount: Decimal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]
+pub struct SubmitAttestationRequest {
+    pub task_id: Uuid,
+    pub decision: String,
+    pub compiled_wasm_hash: Option<String>,
+    pub error_message: Option<String>,
+    pub signature: Option<String>,
+}
 
 /// Register a new validator (Issue # validators)
 pub async fn register_validator(

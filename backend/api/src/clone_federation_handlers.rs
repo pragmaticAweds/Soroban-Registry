@@ -19,10 +19,10 @@ use crate::{
 };
 use shared::{
     AuditActionType, CloneContractRequest, CloneContractResponse, Contract,
-    DuplicateDetectionResult, FederatedRegistry, FederatedRegistryListResponse,
+    FederatedRegistry, FederatedRegistryListResponse,
     FederatedRegistryResponse, FederatedRegistrySummary, FederationAttribution,
     FederationDiscoveryResponse, FederationOptRequest, FederationProtocolConfig,
-    FederationSyncHistoryResponse, FederationSyncJob, FederationSyncResponse, Network,
+    FederationSyncHistoryResponse, FederationSyncJob, FederationSyncResponse,
     RegisterFederatedRegistryRequest, SyncFederatedRegistryRequest,
 };
 
@@ -110,8 +110,8 @@ pub async fn clone_contract(
     let tags_strings: Vec<String> = req
         .tags
         .as_ref()
-        .map(|tags| tags.iter().map(|t| t.to_string()).collect())
-        .unwrap_or_else(|| original.tags.iter().map(|t| t.to_string()).collect());
+        .map(|tags| tags.iter().map(|t| t.name.clone()).collect())
+        .unwrap_or_else(|| original.tags.iter().map(|t| t.name.clone()).collect());
 
     // Insert the cloned contract
     let clone: Contract = sqlx::query_as(
@@ -198,7 +198,7 @@ pub async fn clone_contract(
     write_contract_audit_log(
         &state.db,
         // FIX: use the correct variant name from shared::AuditActionType
-        AuditActionType::Create,
+        AuditActionType::ContractPublished,
         clone.id,
         publisher_id,
         changes,
@@ -230,7 +230,7 @@ pub async fn clone_contract(
         ("id" = String, Path, description = "Contract ID")
     ),
     responses(
-        (status = 200, description = "List of clones", body = [ContractCloneHistory]),
+        (status = 200, description = "List of clones", body = [Contract]),
         (status = 404, description = "Contract not found")
     ),
     tag = "Contracts"

@@ -12,8 +12,9 @@ use uuid::Uuid;
 
 use crate::{
     error::{ApiError, ApiResult},
-    contract_abi::parser::parse_json_spec,
 };
+
+use contract_abi::parser::parse_json_spec;
 
 #[derive(Debug, Clone, FromRow)]
 struct ContractAnalysisRow {

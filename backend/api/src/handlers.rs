@@ -8,7 +8,7 @@ use axum::{
         rejection::{JsonRejection, QueryRejection},
         Path, Query, State,
     },
-    http::{header, HeaderMap, Method, StatusCode},
+    http::{header, HeaderMap, StatusCode},
     response::{IntoResponse, Response},
     Json,
 };
@@ -68,23 +68,28 @@ pub struct ContractStatsResponse {
 
 use crate::{
     analytics,
-    auth::AuthClaims,
     breaking_changes::{diff_abi, has_breaking_changes, resolve_abi},
     contract_events::ContractEventEnvelope,
     dependency,
     error::{ApiError, ApiResult},
     onchain_verification::OnChainVerifier,
     state::{AppState, ContractEventVisibility},
-    contract_abi::{generate_openapi, parse_json_spec, to_json, to_yaml},
 };
+
+use contract_abi::{generate_openapi, parse_json_spec, to_json, to_yaml};
 
 pub(crate) fn db_internal_error(operation: &str, err: sqlx::Error) -> ApiError {
     tracing::error!(operation = operation, error = ?err, "database operation failed");
     ApiError::internal("An unexpected database error occurred")
 }
 
-fn maturity_filter_value<T: ToString>(maturity: T) -> String {
-    maturity.to_string()
+fn maturity_filter_value(maturity: &shared::MaturityLevel) -> &'static str {
+    match maturity {
+        shared::MaturityLevel::Experimental => "experimental",
+        shared::MaturityLevel::Beta => "beta",
+        shared::MaturityLevel::Stable => "stable",
+        shared::MaturityLevel::Production => "production",
+    }
 }
 
 pub(crate) async fn fetch_contract_identity(
@@ -1556,15 +1561,27 @@ pub async fn list_contracts(
         qb.push("c.created_at ");
     } else {
         match sort_by {
-            shared::SortBy::UpdatedAt => qb.push("c.updated_at "),
-            shared::SortBy::VerifiedAt => qb.push("c.verified_at "),
-            shared::SortBy::LastAccessedAt => qb.push("c.last_accessed_at "),
-            shared::SortBy::Popularity | shared::SortBy::Interactions => qb.push("COUNT(ci.id) "),
-            shared::SortBy::Deployments => {
-                qb.push("SUM(CASE WHEN ci.interaction_type = 'deploy' THEN 1 ELSE 0 END) ")
+            shared::SortBy::UpdatedAt => {
+                qb.push("c.updated_at ");
             }
-            shared::SortBy::Relevance if params.query.is_some() => qb.push("c.created_at "),
-            _ => qb.push("c.created_at "),
+            shared::SortBy::VerifiedAt => {
+                qb.push("c.verified_at ");
+            }
+            shared::SortBy::LastAccessedAt => {
+                qb.push("c.last_accessed_at ");
+            }
+            shared::SortBy::Popularity | shared::SortBy::Interactions => {
+                qb.push("COUNT(ci.id) ");
+            }
+            shared::SortBy::Deployments => {
+                qb.push("SUM(CASE WHEN ci.interaction_type = 'deploy' THEN 1 ELSE 0 END) ");
+            }
+            shared::SortBy::Relevance if params.query.is_some() => {
+                qb.push("c.created_at ");
+            }
+            _ => {
+                qb.push("c.created_at ");
+            }
         }
     }
     qb.push(direction);
@@ -5680,7 +5697,7 @@ pub async fn get_contract_deployments(
 
         ensure_contract_exists(
             &state,
-            contract_uuid,
+            uuid,
             &id,
             "get contract for list deployments",
         )
@@ -5760,14 +5777,6 @@ pub async fn get_contract_deployments(
     );
     query_builder.push_bind(&target_uuids);
     query_builder.push(") AND ci.interaction_type = cast('deploy' as text)");
-
-    let deployments: Vec<ContractDeployment> = sqlx::query_as(
-        "SELECT * FROM contract_deployments WHERE contract_id = $1 ORDER BY deployed_at DESC",
-    )
-    .bind(contract_uuid)
-    .fetch_all(&state.db)
-    .await
-    .map_err(|err| db_internal_error("get contract deployments", err))?;
 
     query_builder.push(" ORDER BY ci.created_at DESC");
     query_builder.push(" LIMIT ");
@@ -6320,7 +6329,17 @@ mod tests {
             .unwrap();
         let registry = Registry::new();
         let (job_engine, _rx) = soroban_batch::engine::JobEngine::new();
-        let state = AppState::new(db, registry, Arc::new(job_engine), is_shutting_down)
+        let rate_limit_state = Arc::new(crate::rate_limit::RateLimitState::from_env());
+        let (event_broadcaster, _event_rx) = tokio::sync::broadcast::channel(1);
+        let state = AppState::new(
+            db,
+            registry,
+            Arc::new(job_engine),
+            is_shutting_down,
+            rate_limit_state,
+            None,
+            event_broadcaster,
+        )
             .await
             .unwrap();
 
@@ -6376,15 +6395,20 @@ mod tests {
             contract_id: "C123".to_string(),
             wasm_hash: "hash".to_string(),
             name: "Demo".to_string(),
+            slug: "demo".to_string(),
             description: None,
             publisher_id: Uuid::nil(),
             network: Network::Testnet,
             is_verified: true,
+            verification_status: shared::VerificationStatus::Verified,
             category: None,
             tags: Vec::new(),
             created_at: now,
             updated_at: now + chrono::TimeDelta::seconds(10),
             verified_at: Some(now + chrono::TimeDelta::seconds(20)),
+            deployed_at: None,
+            verified_by: None,
+            verification_notes: None,
             last_accessed_at: Some(now + chrono::TimeDelta::seconds(30)),
             health_score: 0,
             is_maintenance: false,
@@ -6394,6 +6418,7 @@ mod tests {
             relevance_score: None,
             visibility: shared::VisibilityType::Public,
             current_version: None,
+            usage_count: 0,
         };
 
         assert_eq!(
@@ -6476,7 +6501,18 @@ mod tests {
             network: "testnet".to_string(),
             is_verified: true,
             category: Some("DeFi".to_string()),
-            tags: vec!["yield".to_string(), "automation".to_string()],
+            tags: vec![
+                shared::Tag {
+                    id: Uuid::parse_str("44444444-4444-4444-4444-444444444444").unwrap(),
+                    name: "yield".to_string(),
+                    color: "#888888".to_string(),
+                },
+                shared::Tag {
+                    id: Uuid::parse_str("55555555-5555-5555-5555-555555555555").unwrap(),
+                    name: "automation".to_string(),
+                    color: "#888888".to_string(),
+                },
+            ],
             maturity: Some("stable".to_string()),
             health_score: 92,
             is_maintenance: false,

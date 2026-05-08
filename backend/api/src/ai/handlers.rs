@@ -1,8 +1,8 @@
 use crate::ai::{
     context_manager::ContextManager,
-    models::{ChatMessage, ChatSession},
+    models::{ChatMessage as DbChatMessage, ChatSession},
     prompt_builder::PromptBuilder,
-    service::{AIRequest, AIService, ContractContext},
+    service::{ChatMessage, ContractContext},
 };
 use crate::error::ApiError;
 use crate::state::AppState;
@@ -12,8 +12,6 @@ use axum::{
 };
 use futures_util::{SinkExt, StreamExt};
 use serde::{Deserialize, Serialize};
-use serde_json::Value;
-use std::sync::Arc;
 use tracing::warn;
 use uuid::Uuid;
 
@@ -64,7 +62,7 @@ pub struct SuggestResponse {
 #[derive(Debug, Serialize, Deserialize)]
 pub struct SessionResponse {
     pub session: ChatSession,
-    pub messages: Vec<ChatMessage>,
+    pub messages: Vec<DbChatMessage>,
 }
 
 /// AI Chat handler - general Q&A
@@ -199,7 +197,7 @@ async fn handle_ai_chat_ws(socket: axum::extract::ws::WebSocket, state: AppState
 
                         // Get contract context if needed
                         let contract_context = if let Some(contract_id) = payload.contract_id {
-                            context_manager.get_contract_context(contract_id).await.ok()
+                            context_manager.get_contract_context(contract_id).await.ok().flatten()
                         } else {
                             None
                         };
@@ -407,7 +405,7 @@ pub async fn check_vulnerabilities_handler(
         .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "AI_ERROR", e.to_string()))?;
 
     Ok(Json(VulnerabilityResponse {
-        contract_id,
+        contract_id: contract_uuid,
         vulnerabilities: response.content,
         model_used: response.model_used,
         response_time_ms: response.response_time_ms,
@@ -467,7 +465,7 @@ pub async fn explain_contract_handler(
         .map_err(|e| ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, "AI_ERROR", e.to_string()))?;
 
     Ok(Json(ExplainResponse {
-        contract_id,
+        contract_id: contract_uuid,
         explanation: response.content,
         model_used: response.model_used,
         response_time_ms: response.response_time_ms,

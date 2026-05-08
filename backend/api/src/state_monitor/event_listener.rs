@@ -1,10 +1,10 @@
-use anyhow::{Context, Result};
+use anyhow::Result;
 use sqlx::PgPool;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::broadcast;
 use tokio::time::{interval, Duration};
-use tracing::{debug, error, info, warn};
+use tracing::{error, info};
 
 use crate::state::RealtimeEvent;
 use crate::state_monitor::anomaly_detector::AnomalyDetector;

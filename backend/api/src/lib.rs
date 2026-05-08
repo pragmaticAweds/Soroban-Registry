@@ -73,6 +73,7 @@ pub mod routes;
 pub mod search_client;
 pub mod security_scan_handlers;
 pub mod similarity_handlers;
+pub mod simulation;
 pub mod simulation_handlers;
 pub mod onchain_verification;
 pub mod quota_handlers;

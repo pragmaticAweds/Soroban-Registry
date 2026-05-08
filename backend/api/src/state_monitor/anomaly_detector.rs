@@ -1,7 +1,6 @@
 use anyhow::Result;
 use sqlx::PgPool;
-use std::sync::Arc;
-use tracing::{debug, info, warn};
+use tracing::info;
 
 use crate::state_monitor::StateChangeEntry;
 

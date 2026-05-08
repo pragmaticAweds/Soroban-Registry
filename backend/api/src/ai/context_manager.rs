@@ -1,7 +1,7 @@
 use crate::ai::models::{ChatMessage, ChatSession};
-use shared::models::Contract;
+use crate::ai::service::ContractContext;
 use sqlx::{postgres::PgPool, types::Uuid};
-use std::sync::Arc;
+use serde_json::Value;
 
 /// Manages conversation context and chat history for AI sessions
 #[derive(Clone)]
@@ -146,13 +146,12 @@ impl ContextManager {
                 COALESCE(
                     json_agg(t.name) FILTER (WHERE t.id IS NOT NULL),
                     '[]'::jsonb
-                ) as tags,
-                c.network as network
+                ) as tags
             FROM contracts c
             LEFT JOIN contract_tags ct ON c.id = ct.contract_id
             LEFT JOIN tags t ON ct.tag_id = t.id
             WHERE c.id = $1
-            GROUP BY c.id, c.name, c.slug, c.description, c.category, c.network
+            GROUP BY c.id, c.name, c.slug, c.description, c.category
             "#,
             contract_id
         )
