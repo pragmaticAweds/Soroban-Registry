@@ -479,7 +479,7 @@ pub enum Commands {
         minimize: bool,
     },
 
-    /// Profile contract execution performance
+    /// Perf contract execution performance
     #[command(name = "perf")]
     Perf {
         /// Path to contract file
