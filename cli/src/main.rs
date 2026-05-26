@@ -1446,9 +1446,9 @@ pub enum KeysCommands {
 pub enum ContractCommands {
     /// Verify a deployed contract's authenticity against the on-chain registry
     ///
-    /// Usage: soroban-registry contract verify <address> --network <network> [--json]
+    /// Usage: soroban-registry contract verify <address> --network <network> [--json] [--strict] [--batch] [--no-cache]
     Verify {
-        /// On-chain contract address to verify
+        /// On-chain contract address to verify (or comma-separated list for batch verification)
         address: String,
 
         /// Stellar network (mainnet | testnet | futurenet)
@@ -1458,6 +1458,18 @@ pub enum ContractCommands {
         /// Output results as machine-readable JSON
         #[arg(long)]
         json: bool,
+
+        /// Strict mode: fail if any warnings or errors are found
+        #[arg(long)]
+        strict: bool,
+
+        /// Batch mode: verify multiple contracts (comma-separated addresses)
+        #[arg(long)]
+        batch: bool,
+
+        /// Skip cache and always fetch fresh data from registry
+        #[arg(long)]
+        no_cache: bool,
     },
 
     /// Display detailed information about a contract
@@ -2815,14 +2827,20 @@ pub async fn dispatch_command(
                 address,
                 network,
                 json,
+                strict,
+                batch,
+                no_cache,
             } => {
                 log::debug!(
-                    "Command: contract verify | address={} network={} json={}",
+                    "Command: contract verify | address={} network={} json={} strict={} batch={} no_cache={}",
                     address,
                     network,
-                    json
+                    json,
+                    strict,
+                    batch,
+                    no_cache
                 );
-                contract_verify::run(&cli.api_url, &address, &network, json).await?;
+                contract_verify::run(&cli.api_url, &address, &network, json, strict, batch, no_cache).await?;
             }
             ContractCommands::Details {
                 address,
