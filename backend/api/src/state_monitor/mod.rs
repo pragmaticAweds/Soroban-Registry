@@ -4,6 +4,7 @@
 pub mod anomaly_detector;
 pub mod event_listener;
 pub mod handlers;
+pub mod point_in_time;
 
 use sqlx::PgPool;
 use std::sync::Arc;
