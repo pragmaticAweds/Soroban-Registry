@@ -2,6 +2,7 @@
 
 mod analytics;
 mod analyze;
+mod auth;
 mod audit_command;
 mod backup;
 mod batch_ops;
@@ -12,6 +13,7 @@ mod codegen;
 mod commands;
 mod compare;
 mod config;
+mod contract_register;
 mod api_key;
 mod contract_dependency;
 mod contract_highlight;
@@ -597,6 +599,12 @@ pub enum Commands {
         action: ConfigSubcommands,
     },
 
+    /// Manage authentication sessions and API tokens
+    Auth {
+        #[command(subcommand)]
+        action: AuthCommands,
+    },
+
     /// Inspect and modify contract state (dev/test mutation only)
     State {
         #[command(subcommand)]
@@ -1079,6 +1087,49 @@ pub enum ConfigSubcommands {
 }
 
 #[derive(Debug, Subcommand)]
+pub enum AuthCommands {
+    /// Sign in with a GitHub account, Stellar wallet, or API key
+    Login {
+        /// Authentication method to use
+        #[arg(long, value_enum)]
+        method: Option<crate::auth::AuthMethod>,
+
+        /// Identity to authenticate with
+        #[arg(long)]
+        identity: Option<String>,
+
+        /// Secret credential or signing seed
+        #[arg(long)]
+        secret: Option<String>,
+
+        /// Comma-separated token scopes
+        #[arg(long, value_delimiter = ',')]
+        scopes: Vec<String>,
+
+        /// Token lifetime, e.g. 1h, 30m, 7d, or seconds
+        #[arg(long)]
+        expires: Option<String>,
+    },
+
+    /// Sign out and remove stored credentials
+    Logout {},
+
+    /// Show the current authentication state
+    Status {},
+
+    /// Print the current API token, refreshing it when possible
+    Token {
+        /// Comma-separated token scopes
+        #[arg(long, value_delimiter = ',')]
+        scopes: Vec<String>,
+
+        /// Token lifetime, e.g. 1h, 30m, 7d, or seconds
+        #[arg(long)]
+        expires: Option<String>,
+    },
+}
+
+#[derive(Debug, Subcommand)]
 pub enum StateSubcommands {
     /// Get a single state value by key
     Get {
@@ -1455,6 +1506,21 @@ pub enum KeysCommands {
 /// Sub-commands for the `contract` group (#522)
 #[derive(Debug, Subcommand)]
 pub enum ContractCommands {
+    /// Register one or more contracts in the registry
+    Register {
+        /// Path to a YAML or JSON metadata file
+        #[arg(long)]
+        file: Option<String>,
+
+        /// Enable repeated prompts for multiple contracts
+        #[arg(long)]
+        batch: bool,
+
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Verify a deployed contract's authenticity against the on-chain registry
     ///
     /// Usage: soroban-registry contract verify <address> --network <network> [--json]
@@ -2639,6 +2705,66 @@ pub async fn dispatch_command(
                 .await?;
             }
         },
+        Commands::Auth { action } => match action {
+            AuthCommands::Login {
+                method,
+                identity,
+                secret,
+                scopes,
+                expires,
+            } => {
+                let method = match method {
+                    Some(method) => method,
+                    None => {
+                        let selected = wizard::prompt_with_validation(
+                            "Authentication method [github|stellar|api-key]",
+                            Some("stellar".to_string()),
+                            |value| {
+                                matches!(
+                                    value.trim().to_ascii_lowercase().as_str(),
+                                    "github" | "stellar" | "api-key"
+                                )
+                            },
+                            "Choose github, stellar, or api-key.",
+                        )?;
+                        match selected.trim().to_ascii_lowercase().as_str() {
+                            "github" => crate::auth::AuthMethod::Github,
+                            "stellar" => crate::auth::AuthMethod::Stellar,
+                            "api-key" => crate::auth::AuthMethod::ApiKey,
+                            _ => unreachable!(),
+                        }
+                    }
+                };
+                log::debug!(
+                    "Command: auth login | method={} identity={:?} scopes={:?} expires={:?}",
+                    method,
+                    identity,
+                    scopes,
+                    expires
+                );
+                auth::login(
+                    &cli.api_url,
+                    method,
+                    identity.as_deref(),
+                    secret.as_deref(),
+                    scopes,
+                    expires.as_deref(),
+                )
+                .await?;
+            }
+            AuthCommands::Logout {} => {
+                log::debug!("Command: auth logout");
+                auth::logout()?;
+            }
+            AuthCommands::Status {} => {
+                log::debug!("Command: auth status");
+                auth::status(&cli.api_url).await?;
+            }
+            AuthCommands::Token { scopes, expires } => {
+                log::debug!("Command: auth token | scopes={:?} expires={:?}", scopes, expires);
+                auth::token(&cli.api_url, scopes, expires.as_deref()).await?;
+            }
+        },
         Commands::State { action } => match action {
             StateSubcommands::Get {
                 contract_id,
@@ -2895,6 +3021,16 @@ pub async fn dispatch_command(
         },
         // ── Contract verify command (#522) ───────────────────────────────────
         Commands::Contract { action } => match action {
+            ContractCommands::Register { file, batch, json } => {
+                log::debug!(
+                    "Command: contract register | file={:?} batch={} json={}",
+                    file,
+                    batch,
+                    json
+                );
+                contract_register::run(&cli.api_url, cfg_network, file.as_deref(), batch, json)
+                    .await?;
+            }
             ContractCommands::Verify {
                 address,
                 network,
