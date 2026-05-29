@@ -16,7 +16,7 @@ use std::collections::BTreeMap;
 use std::fs::{self, OpenOptions};
 use std::io::Write;
 #[cfg(unix)]
-use std::os::unix::fs::OpenOptionsExt;
+use std::os::unix::fs::{OpenOptionsExt, PermissionsExt};
 use std::path::PathBuf;
 
 // ── Storage types ─────────────────────────────────────────────────────────────
@@ -59,7 +59,10 @@ fn dev_template() -> Environment {
         "SOROBAN_REGISTRY_API_URL".to_string(),
         "http://localhost:3001".to_string(),
     );
-    vars.insert("SOROBAN_NETWORK".to_string(), "testnet".to_string());
+    vars.insert(
+        "SOROBAN_REGISTRY_NETWORK".to_string(),
+        "testnet".to_string(),
+    );
     vars.insert(
         "SOROBAN_REGISTRY_LOG_LEVEL".to_string(),
         "debug".to_string(),
@@ -73,7 +76,10 @@ fn staging_template() -> Environment {
         "SOROBAN_REGISTRY_API_URL".to_string(),
         "https://staging-registry.example.com".to_string(),
     );
-    vars.insert("SOROBAN_NETWORK".to_string(), "testnet".to_string());
+    vars.insert(
+        "SOROBAN_REGISTRY_NETWORK".to_string(),
+        "testnet".to_string(),
+    );
     vars.insert("SOROBAN_REGISTRY_LOG_LEVEL".to_string(), "info".to_string());
     Environment { vars }
 }
@@ -84,7 +90,10 @@ fn production_template() -> Environment {
         "SOROBAN_REGISTRY_API_URL".to_string(),
         "https://registry.example.com".to_string(),
     );
-    vars.insert("SOROBAN_NETWORK".to_string(), "mainnet".to_string());
+    vars.insert(
+        "SOROBAN_REGISTRY_NETWORK".to_string(),
+        "mainnet".to_string(),
+    );
     vars.insert("SOROBAN_REGISTRY_LOG_LEVEL".to_string(), "warn".to_string());
     Environment { vars }
 }
@@ -133,6 +142,7 @@ fn save_store(store: &Environments) -> Result<()> {
             .mode(0o600)
             .open(&path)
             .with_context(|| format!("Failed to open environments file: {}", path.display()))?;
+        let _ = fs::set_permissions(&path, fs::Permissions::from_mode(0o600));
         file.write_all(content.as_bytes())
             .with_context(|| format!("Failed to write environments file: {}", path.display()))?;
     }
@@ -238,7 +248,7 @@ fn merged_vars(env: &Environment) -> BTreeMap<String, String> {
         merged.insert("SOROBAN_REGISTRY_API_KEY".to_string(), key);
     }
     merged.insert(
-        "SOROBAN_DEFAULT_NETWORK".to_string(),
+        "SOROBAN_REGISTRY_NETWORK".to_string(),
         global.default_network,
     );
 
@@ -577,8 +587,8 @@ fn print_env_table(
         println!("  {:<40} {}", "Variable".bold(), "Value".bold());
         println!("  {}", "─".repeat(56).dimmed());
         for (k, v) in vars {
-            let display_value = if v.len() > 50 {
-                format!("{}…", &v[..47])
+            let display_value = if v.chars().count() > 50 {
+                format!("{}…", v.chars().take(47).collect::<String>())
             } else {
                 v.clone()
             };
