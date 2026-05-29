@@ -6,6 +6,10 @@ mod auth;
 mod audit_command;
 mod backup;
 mod batch_ops;
+mod batch_audit;
+mod batch_deploy;
+mod batch_export;
+mod batch_import;
 mod batch_register;
 mod batch_verify;
 mod cicd;
@@ -826,6 +830,96 @@ pub enum Commands {
         #[arg(long)]
         dry_run: bool,
 
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Audit multiple contracts in batch for security and best practices
+    BatchAudit {
+        /// File containing contract paths (one per line) or comma-separated paths
+        file: String,
+        /// Report format: text, json, markdown
+        #[arg(long, default_value = "text")]
+        format: String,
+        /// Output directory for generated reports
+        #[arg(long)]
+        output_dir: Option<String>,
+        /// Fail on findings at or above this severity
+        #[arg(long)]
+        fail_on: Option<String>,
+        /// Show only high and critical findings
+        #[arg(long)]
+        high_risk: bool,
+        /// Audit profile: basic, standard, comprehensive
+        #[arg(long, default_value = "standard")]
+        profile: String,
+        /// Export audit findings to a file
+        #[arg(long)]
+        export: Option<String>,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Deploy a contract WASM to multiple networks
+    BatchDeploy {
+        /// Path to the WASM file
+        wasm_file: String,
+        /// Comma-separated target networks (mainnet,testnet,futurenet)
+        #[arg(long, default_value = "testnet")]
+        networks: String,
+        /// Signer Stellar address or secret
+        #[arg(long)]
+        signer: String,
+        /// Stop and report failure if any deployment fails (no on-chain rollback)
+        #[arg(long)]
+        atomic: bool,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Export multiple contracts in bulk
+    BatchExport {
+        /// Output directory for exported files
+        output_dir: String,
+        /// Filter query (e.g. network=testnet or category=defi)
+        #[arg(long)]
+        filter: Option<String>,
+        /// Output format: json, csv, archive
+        #[arg(long, default_value = "json")]
+        format: String,
+        /// Organize output by network/category subdirectories
+        #[arg(long)]
+        organize: bool,
+        /// Compress the output directory into a .tar.gz
+        #[arg(long)]
+        compress: bool,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Import contracts in bulk from a directory
+    BatchImport {
+        /// Input directory containing contract files to import
+        input_dir: String,
+        /// Force a specific format (json, csv, archive); auto-detected if omitted
+        #[arg(long)]
+        format: Option<String>,
+        /// How to handle duplicates: skip, update, fail
+        #[arg(long, default_value = "skip")]
+        on_duplicate: String,
+        /// Preview what would be imported without committing
+        #[arg(long)]
+        dry_run: bool,
+        /// Abort on first error; report atomically
+        #[arg(long)]
+        atomic: bool,
+        /// Output directory for archive imports
+        #[arg(long, default_value = "./imported")]
+        output_dir: String,
         /// Output results as machine-readable JSON
         #[arg(long)]
         json: bool,
@@ -3276,6 +3370,80 @@ pub async fn dispatch_command(
                 &manifest,
                 publisher.as_deref(),
                 dry_run,
+                json,
+            )
+            .await?;
+        }
+        Commands::BatchAudit {
+            file,
+            format,
+            output_dir,
+            fail_on,
+            high_risk,
+            profile,
+            export,
+            json,
+        } => {
+            log::debug!("Command: batch-audit | file={}", file);
+            batch_audit::run_batch_audit(
+                &file,
+                &format,
+                output_dir.as_deref(),
+                fail_on.as_deref(),
+                high_risk,
+                &profile,
+                export.as_deref(),
+                json,
+            )?;
+        }
+        Commands::BatchDeploy {
+            wasm_file,
+            networks,
+            signer,
+            atomic,
+            json,
+        } => {
+            log::debug!("Command: batch-deploy | wasm={}", wasm_file);
+            batch_deploy::run_batch_deploy(&wasm_file, &networks, &signer, atomic, json)?;
+        }
+        Commands::BatchExport {
+            output_dir,
+            filter,
+            format,
+            organize,
+            compress,
+            json,
+        } => {
+            log::debug!("Command: batch-export | output_dir={}", output_dir);
+            batch_export::run_batch_export(
+                &cli.api_url,
+                &output_dir,
+                filter.as_deref(),
+                &format,
+                organize,
+                compress,
+                json,
+            )
+            .await?;
+        }
+        Commands::BatchImport {
+            input_dir,
+            format,
+            on_duplicate,
+            dry_run,
+            atomic,
+            output_dir,
+            json,
+        } => {
+            log::debug!("Command: batch-import | input_dir={}", input_dir);
+            batch_import::run_batch_import(
+                &cli.api_url,
+                &input_dir,
+                format.as_deref(),
+                &on_duplicate,
+                dry_run,
+                atomic,
+                &output_dir,
                 json,
             )
             .await?;
