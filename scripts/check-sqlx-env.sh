@@ -7,8 +7,7 @@
 #
 # Pass conditions (one of):
 #   1. SQLX_OFFLINE=true AND backend/.sqlx/ contains prepared query data.
-#   2. DATABASE_URL is set, reachable, and points at a database with all
-#      migrations applied.
+#   2. DATABASE_URL is set, uses a Postgres URL, and is reachable.
 #
 # Exit codes:
 #   0 — environment is ready to build.
@@ -40,7 +39,7 @@ if [[ -z "${DATABASE_URL:-}" ]]; then
   red "✗ DATABASE_URL is not set."
   red ""
   red "  SQLx's query macros validate SQL against a live database at compile"
-  red "  time. Set DATABASE_URL to a reachable, migrated Postgres instance:"
+  red "  time. Set DATABASE_URL to a reachable Postgres instance:"
   red ""
   red "    export DATABASE_URL=\"postgresql://postgres:postgres@localhost:5432/soroban_registry\""
   red ""
@@ -59,6 +58,7 @@ fi
 
 # If psql is available, try a real connection so we fail fast with a clear
 # message instead of waiting for cargo to choke on the first query macro.
+# NOTE: This validates reachability only; it does not verify migration state.
 if command -v psql >/dev/null 2>&1; then
   if ! psql "$DATABASE_URL" -c 'SELECT 1' >/dev/null 2>&1; then
     red "✗ DATABASE_URL is set but the database is unreachable."
@@ -70,4 +70,4 @@ else
   yellow "! psql not found — skipping live connectivity check."
 fi
 
-green "✓ DATABASE_URL is set and reachable. SQLx query macros can compile."
+green "✓ DATABASE_URL is set and reachable."

@@ -89,7 +89,7 @@ createdb soroban_registry
 export DATABASE_URL="postgresql://postgres:postgres@localhost:5432/soroban_registry"
 
 # 3. Install the SQLx CLI (one-time)
-cargo install sqlx-cli --no-default-features --features rustls,postgres
+cargo install sqlx-cli --version 0.8.6 --no-default-features --features rustls,postgres --locked
 
 # 4. Apply migrations so the schema matches what the query macros expect
 sqlx migrate run --source database/migrations
