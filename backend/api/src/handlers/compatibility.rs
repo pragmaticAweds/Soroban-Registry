@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::header,
@@ -394,7 +395,7 @@ pub async fn export_contract_compatibility(
 pub async fn add_contract_compatibility(
     State(state): State<AppState>,
     Path(contract_id): Path<String>,
-    Json(body): Json<AddCompatibilityRequest>,
+    ValidatedJson(body): ValidatedJson<AddCompatibilityRequest>,
 ) -> ApiResult<Json<serde_json::Value>> {
     let (source_contract_uuid, _) = resolve_contract_identity(&state, &contract_id).await?;
 

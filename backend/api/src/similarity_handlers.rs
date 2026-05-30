@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Json, Path, Query, State},
     response::IntoResponse,
@@ -121,7 +122,7 @@ pub async fn get_similar_contracts(
 )]
 pub async fn analyze_contract_similarity_batch(
     State(state): State<AppState>,
-    Json(req): Json<BatchSimilarityAnalysisRequest>,
+    ValidatedJson(req): ValidatedJson<BatchSimilarityAnalysisRequest>,
 ) -> ApiResult<impl IntoResponse> {
     let limit = req.limit_per_contract.unwrap_or(10).clamp(1, 50);
 

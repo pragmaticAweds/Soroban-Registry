@@ -3,6 +3,7 @@
 // Provides schema version tracking, checksum validation, advisory locking,
 // and rollback capability for safe database deployments.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     Json,
@@ -219,7 +220,7 @@ pub async fn get_migration_status(
 /// Uses advisory lock to prevent concurrent registration.
 pub async fn register_migration(
     State(state): State<AppState>,
-    Json(body): Json<RegisterMigrationRequest>,
+    ValidatedJson(body): ValidatedJson<RegisterMigrationRequest>,
 ) -> ApiResult<Json<RegisterMigrationResponse>> {
     // Acquire advisory lock
     let acquired = try_acquire_lock(&state.db)

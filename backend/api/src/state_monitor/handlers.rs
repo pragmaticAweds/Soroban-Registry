@@ -3,6 +3,7 @@ use crate::{
     state::AppState,
     state_monitor::{AnomalyInfo, StateChangeEntry},
 };
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -138,7 +139,7 @@ pub async fn get_contract_anomalies_handler(
 pub async fn resolve_anomaly_handler(
     State(state): State<AppState>,
     Path(anomaly_id): Path<String>,
-    Json(payload): Json<ResolveAnomalyRequest>,
+    ValidatedJson(payload): ValidatedJson<ResolveAnomalyRequest>,
 ) -> Result<Json<serde_json::Value>, ApiError> {
     let monitor = state.state_monitor.as_ref().ok_or_else(|| {
         ApiError::service_unavailable_with(

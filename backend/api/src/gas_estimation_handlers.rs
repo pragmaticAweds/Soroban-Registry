@@ -21,6 +21,7 @@ use shared::models::{
     GasEstimateQuery, MethodGasEstimate,
 };
 
+use crate::validation::extractors::ValidatedJson;
 use crate::{
     error::{ApiError, ApiResult},
     state::AppState,
@@ -285,7 +286,7 @@ pub async fn get_method_gas_estimate(
 pub async fn batch_gas_estimate(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<BatchGasEstimateRequest>,
+    ValidatedJson(req): ValidatedJson<BatchGasEstimateRequest>,
 ) -> ApiResult<Json<BatchGasEstimateResponse>> {
     if req.methods.is_empty() {
         return Err(ApiError::bad_request(

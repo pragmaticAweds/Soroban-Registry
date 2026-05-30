@@ -6,6 +6,7 @@
 //   POST /api/contracts/:id/abi              — publish a new ABI version
 //   POST /api/contracts/:id/check-compatibility — compare two versions
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     Json,
@@ -57,7 +58,7 @@ pub struct PublishAbiResponse {
 pub async fn publish_abi(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<PublishAbiRequest>,
+    ValidatedJson(req): ValidatedJson<PublishAbiRequest>,
 ) -> ApiResult<Json<PublishAbiResponse>> {
     if req.version.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -187,7 +188,7 @@ pub struct CompatibilityChange {
 pub async fn check_compatibility(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<CheckCompatibilityRequest>,
+    ValidatedJson(req): ValidatedJson<CheckCompatibilityRequest>,
 ) -> ApiResult<Json<CompatibilityReport>> {
     let (base, new_rec) = if req.base_version.is_some() || req.new_version.is_some() {
         let bv = req.base_version.ok_or_else(|| {

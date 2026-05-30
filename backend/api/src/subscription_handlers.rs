@@ -1,6 +1,7 @@
 // Contract Subscription & Notification Handlers (#493)
 // Enable users to subscribe to alerts for contract updates and changes
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{OriginalUri, Path, Query, State},
     http::{HeaderMap, StatusCode},
@@ -80,7 +81,7 @@ pub async fn subscribe_to_contract(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
     auth_user: auth::AuthenticatedUser,
-    Json(req): Json<SubscribeRequest>,
+    ValidatedJson(req): ValidatedJson<SubscribeRequest>,
 ) -> ApiResult<Json<ContractSubscription>> {
     // Verify contract exists
     let contract_exists: bool =
@@ -249,7 +250,7 @@ pub async fn update_subscription(
     State(state): State<AppState>,
     Path(subscription_id): Path<Uuid>,
     auth_user: auth::AuthenticatedUser,
-    Json(req): Json<UpdateSubscriptionRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateSubscriptionRequest>,
 ) -> ApiResult<Json<ContractSubscription>> {
     // Verify ownership first.
     let exists: bool = sqlx::query_scalar(
@@ -354,7 +355,7 @@ pub async fn get_notification_preferences(
 pub async fn update_notification_preferences(
     State(state): State<AppState>,
     auth_user: auth::AuthenticatedUser,
-    Json(req): Json<UpdateUserNotificationPreferencesRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateUserNotificationPreferencesRequest>,
 ) -> ApiResult<Json<UserNotificationPreferences>> {
     let user_id = auth_user.publisher_id;
 
@@ -673,7 +674,7 @@ pub async fn list_webhooks(
 pub async fn create_webhook(
     State(state): State<AppState>,
     auth_user: auth::AuthenticatedUser,
-    Json(req): Json<CreateWebhookRequest>,
+    ValidatedJson(req): ValidatedJson<CreateWebhookRequest>,
 ) -> ApiResult<Json<WebhookConfiguration>> {
     // Validate URL scheme — only https allowed in production.
     if !req.url.starts_with("https://") && !req.url.starts_with("http://localhost") {

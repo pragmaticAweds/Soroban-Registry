@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use futures_util::stream::{self, StreamExt};
 use serde_json::{json, Value};
@@ -7,7 +8,7 @@ use crate::{onchain_verification::OnChainVerifier, state::AppState};
 
 pub async fn batch_verify_contracts(
     State(state): State<AppState>,
-    Json(req): Json<BatchVerifyRequest>,
+    ValidatedJson(req): ValidatedJson<BatchVerifyRequest>,
 ) -> impl IntoResponse {
     if req.contracts.is_empty() {
         return (

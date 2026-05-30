@@ -5,6 +5,7 @@ use crate::{
     notification_handlers,
     state::AppState,
 };
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -24,7 +25,7 @@ use uuid::Uuid;
 pub async fn create_collaborative_review(
     State(state): State<AppState>,
     _user: AuthenticatedUser,
-    Json(payload): Json<CreateCollaborativeReviewRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateCollaborativeReviewRequest>,
 ) -> ApiResult<Json<CollaborativeReview>> {
     let mut tx = state.db.begin().await.map_err(ApiError::from)?;
 
@@ -84,7 +85,7 @@ pub async fn add_collaborative_comment(
     State(state): State<AppState>,
     user: AuthenticatedUser,
     Path(review_id): Path<Uuid>,
-    Json(payload): Json<AddCollaborativeCommentRequest>,
+    ValidatedJson(payload): ValidatedJson<AddCollaborativeCommentRequest>,
 ) -> ApiResult<Json<CollaborativeComment>> {
     let user_id = user.id;
 
@@ -116,7 +117,7 @@ pub async fn update_reviewer_status(
     State(state): State<AppState>,
     user: AuthenticatedUser,
     Path(review_id): Path<Uuid>,
-    Json(payload): Json<UpdateReviewerStatusRequest>,
+    ValidatedJson(payload): ValidatedJson<UpdateReviewerStatusRequest>,
 ) -> ApiResult<StatusCode> {
     let user_id = user.id;
 

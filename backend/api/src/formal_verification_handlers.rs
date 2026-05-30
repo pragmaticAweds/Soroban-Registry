@@ -5,6 +5,7 @@
 //   GET  /api/contracts/:id/formal-verification        – list sessions
 //   GET  /api/contracts/:id/formal-verification/:sid   – get session + results
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -346,7 +347,7 @@ async fn persist_report(
 pub async fn trigger_formal_verification(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<TriggerVerificationRequest>,
+    ValidatedJson(req): ValidatedJson<TriggerVerificationRequest>,
 ) -> ApiResult<(StatusCode, Json<TriggerVerificationResponse>)> {
     // Confirm contract exists and is verified.
     let is_verified: bool = sqlx::query_scalar("SELECT is_verified FROM contracts WHERE id = $1")

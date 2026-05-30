@@ -3,6 +3,7 @@
 //! #487: Contract Mirror/Clone Endpoint
 //! #499: Federated Contract Registry Protocol
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::{header::HeaderMap, StatusCode},
@@ -48,7 +49,7 @@ pub async fn clone_contract(
     State(state): State<AppState>,
     Path(id): Path<String>,
     headers: HeaderMap,
-    Json(req): Json<CloneContractRequest>,
+    ValidatedJson(req): ValidatedJson<CloneContractRequest>,
 ) -> ApiResult<Json<CloneContractResponse>> {
     // Resolve the source contract ID
     let source_uuid = resolve_contract_id(&state.db, &id).await?;
@@ -293,7 +294,7 @@ pub async fn list_federated_registries(
 )]
 pub async fn register_federated_registry(
     State(state): State<AppState>,
-    Json(req): Json<RegisterFederatedRegistryRequest>,
+    ValidatedJson(req): ValidatedJson<RegisterFederatedRegistryRequest>,
 ) -> ApiResult<Json<FederatedRegistryResponse>> {
     let protocol_version = req
         .federation_protocol_version
@@ -388,7 +389,7 @@ pub async fn get_federated_registry(
 )]
 pub async fn sync_from_federated_registry(
     State(state): State<AppState>,
-    Json(req): Json<SyncFederatedRegistryRequest>,
+    ValidatedJson(req): ValidatedJson<SyncFederatedRegistryRequest>,
 ) -> ApiResult<Json<FederationSyncResponse>> {
     // Verify registry exists and is active
     let registry: FederatedRegistry =
@@ -628,7 +629,7 @@ pub async fn get_contract_federation_attribution(
 pub async fn update_contract_federation_settings(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<FederationOptRequest>,
+    ValidatedJson(req): ValidatedJson<FederationOptRequest>,
 ) -> ApiResult<StatusCode> {
     let contract_uuid = resolve_contract_id(&state.db, &id).await?;
 

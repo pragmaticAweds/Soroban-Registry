@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -17,7 +18,7 @@ use crate::{
 
 pub async fn create_notification_template(
     State(state): State<AppState>,
-    Json(req): Json<CreateNotificationTemplateRequest>,
+    ValidatedJson(req): ValidatedJson<CreateNotificationTemplateRequest>,
 ) -> ApiResult<Json<NotificationTemplate>> {
     let template = sqlx::query_as::<_, NotificationTemplate>(
         r#"
@@ -58,7 +59,7 @@ pub async fn get_notification_template(
 
 pub async fn create_user_notification_preference(
     State(state): State<AppState>,
-    Json(req): Json<CreateUserNotificationPreferenceRequest>,
+    ValidatedJson(req): ValidatedJson<CreateUserNotificationPreferenceRequest>,
 ) -> ApiResult<Json<UserNotificationPreference>> {
     let preference = sqlx::query_as::<_, UserNotificationPreference>(
         r#"
@@ -97,7 +98,7 @@ pub async fn get_user_notification_preferences(
 
 pub async fn send_notification(
     State(state): State<AppState>,
-    Json(req): Json<SendNotificationRequest>,
+    ValidatedJson(req): ValidatedJson<SendNotificationRequest>,
 ) -> ApiResult<StatusCode> {
     // First, get the notification template
     let template = sqlx::query_as::<_, NotificationTemplate>(

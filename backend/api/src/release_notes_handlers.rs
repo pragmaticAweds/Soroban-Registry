@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     Json,
@@ -121,7 +122,7 @@ pub async fn list_release_notes(
 pub async fn generate_release_notes(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<GenerateReleaseNotesRequest>,
+    ValidatedJson(req): ValidatedJson<GenerateReleaseNotesRequest>,
 ) -> ApiResult<Json<ReleaseNotesResponse>> {
     let (contract_uuid, contract_id) = fetch_contract_identity(&state, &id).await?;
 
@@ -254,7 +255,7 @@ pub async fn generate_release_notes(
 pub async fn update_release_notes(
     State(state): State<AppState>,
     Path((id, version)): Path<(String, String)>,
-    Json(req): Json<UpdateReleaseNotesRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateReleaseNotesRequest>,
 ) -> ApiResult<Json<ReleaseNotesResponse>> {
     let (contract_uuid, _contract_id) = fetch_contract_identity(&state, &id).await?;
 
@@ -312,7 +313,7 @@ pub async fn update_release_notes(
 pub async fn publish_release_notes(
     State(state): State<AppState>,
     Path((id, version)): Path<(String, String)>,
-    Json(req): Json<PublishReleaseNotesRequest>,
+    ValidatedJson(req): ValidatedJson<PublishReleaseNotesRequest>,
 ) -> ApiResult<Json<ReleaseNotesResponse>> {
     let (contract_uuid, _contract_id) = fetch_contract_identity(&state, &id).await?;
 

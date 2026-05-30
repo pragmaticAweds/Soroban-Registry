@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -214,7 +215,7 @@ pub struct DeclareDependenciesResponse {
 pub async fn declare_contract_dependencies(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(body): Json<DeclareDependenciesRequest>,
+    ValidatedJson(body): ValidatedJson<DeclareDependenciesRequest>,
 ) -> ApiResult<(StatusCode, Json<DeclareDependenciesResponse>)> {
     // Verify contract exists.
     let exists: bool = sqlx::query_scalar("SELECT COUNT(*) > 0 FROM contracts WHERE id = $1")

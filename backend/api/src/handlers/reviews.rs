@@ -22,6 +22,7 @@
 // - Aggregation is computed dynamically on each request (can be cached for performance)
 // ═══════════════════════════════════════════════════════════════════════════
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -72,7 +73,7 @@ pub async fn create_review(
     Path(contract_id): Path<Uuid>,
     Query(query_params): Query<CreateReviewQuery>,
     claims: AuthClaims,
-    Json(payload): Json<CreateReviewRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateReviewRequest>,
 ) -> ApiResult<impl IntoResponse> {
     // Validate rating bounds (1.0 - 5.0)
     if payload.rating < 1.0 || payload.rating > 5.0 {
@@ -293,7 +294,7 @@ pub async fn vote_review(
     State(state): State<AppState>,
     Path((contract_id, review_id)): Path<(Uuid, i32)>,
     claims: AuthClaims,
-    Json(payload): Json<ReviewVoteRequest>,
+    ValidatedJson(payload): ValidatedJson<ReviewVoteRequest>,
 ) -> ApiResult<Json<ReviewVoteResponse>> {
     // Verify the review exists and belongs to the contract
     let review_exists = sqlx::query_scalar::<_, bool>(
@@ -453,7 +454,7 @@ pub async fn flag_review(
     State(state): State<AppState>,
     Path((contract_id, review_id)): Path<(Uuid, i32)>,
     claims: AuthClaims,
-    Json(payload): Json<FlagReviewRequest>,
+    ValidatedJson(payload): ValidatedJson<FlagReviewRequest>,
 ) -> ApiResult<impl IntoResponse> {
     // Verify the review exists and belongs to the contract
     let review_exists = sqlx::query_scalar::<_, bool>(
@@ -564,7 +565,7 @@ pub async fn moderate_review(
     State(state): State<AppState>,
     Path((contract_id, review_id)): Path<(Uuid, i32)>,
     claims: AuthClaims,
-    Json(payload): Json<ModerateReviewRequest>,
+    ValidatedJson(payload): ValidatedJson<ModerateReviewRequest>,
 ) -> ApiResult<Json<ReviewResponse>> {
     // Verify admin status
     if !claims.admin && claims.role.as_deref() != Some("admin") {

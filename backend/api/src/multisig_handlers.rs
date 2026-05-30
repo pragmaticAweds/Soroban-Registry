@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -192,7 +193,7 @@ struct ProposalSigningState {
 
 pub async fn create_policy(
     State(state): State<AppState>,
-    Json(payload): Json<CreateMultisigPolicyRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateMultisigPolicyRequest>,
 ) -> ApiResult<Json<MultisigPolicy>> {
     if payload.name.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -266,7 +267,7 @@ pub async fn create_policy(
 
 pub async fn create_deploy_proposal(
     State(state): State<AppState>,
-    Json(payload): Json<CreateDeployProposalRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateDeployProposalRequest>,
 ) -> ApiResult<Json<DeployProposal>> {
     if payload.contract_name.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -394,7 +395,7 @@ pub async fn create_deploy_proposal(
 pub async fn sign_proposal(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<SignProposalRequest>,
+    ValidatedJson(payload): ValidatedJson<SignProposalRequest>,
 ) -> ApiResult<Json<SignProposalResponse>> {
     let proposal_id = Uuid::parse_str(&id).map_err(|_| {
         ApiError::bad_request_with("InvalidProposalId", "proposal id must be a valid UUID")
@@ -939,7 +940,7 @@ pub async fn list_publisher_keys(
 pub async fn create_publisher_key(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<CreatePublisherKeyRequest>,
+    ValidatedJson(payload): ValidatedJson<CreatePublisherKeyRequest>,
 ) -> ApiResult<Json<PublisherMultisigKey>> {
     let publisher_id = Uuid::parse_str(&id).map_err(|_| {
         ApiError::bad_request_with("InvalidPublisherId", "publisher id must be a UUID")

@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -55,7 +56,7 @@ pub async fn list_contributors(
 /// POST /api/contributors — create a contributor profile
 pub async fn create_contributor(
     State(state): State<AppState>,
-    Json(req): Json<CreateContributorRequest>,
+    ValidatedJson(req): ValidatedJson<CreateContributorRequest>,
 ) -> impl IntoResponse {
     if req.stellar_address.is_empty() {
         return ApiError::bad_request_with("InvalidRequest", "stellar_address is required")
@@ -131,7 +132,7 @@ pub async fn get_contributor(
 pub async fn update_contributor(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<UpdateContributorRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateContributorRequest>,
 ) -> ApiResult<Json<ContributorWithStats>> {
     let contributor: Contributor = sqlx::query_as(
         "UPDATE contributors

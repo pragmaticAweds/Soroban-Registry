@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Query, State},
     http::StatusCode,
@@ -95,7 +96,7 @@ pub async fn get_challenge(
 )]
 pub async fn verify_challenge(
     State(state): State<AppState>,
-    Json(payload): Json<VerifyRequest>,
+    ValidatedJson(payload): ValidatedJson<VerifyRequest>,
 ) -> Result<(StatusCode, Json<VerifyResponse>), ApiError> {
     if payload.address.trim().is_empty()
         || payload.public_key.trim().is_empty()

@@ -1,6 +1,7 @@
 // Security Scanning Handlers (#498)
 // Automated contract security scanning integration
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -35,7 +36,7 @@ pub struct ListScansQuery {
 pub async fn trigger_security_scan(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<TriggerSecurityScanRequest>,
+    ValidatedJson(req): ValidatedJson<TriggerSecurityScanRequest>,
 ) -> ApiResult<Json<SecurityScan>> {
     // Verify contract exists
     let contract_exists: bool =
@@ -340,7 +341,7 @@ pub struct ListIssuesQuery {
 pub async fn update_security_issue(
     State(state): State<AppState>,
     Path((contract_id, issue_id)): Path<(Uuid, Uuid)>,
-    Json(req): Json<UpdateSecurityIssueRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateSecurityIssueRequest>,
 ) -> ApiResult<Json<shared::SecurityIssue>> {
     // Verify issue belongs to contract
     let existing: Option<shared::SecurityIssue> =
@@ -413,7 +414,7 @@ pub async fn list_security_scanners(
 /// POST /api/security/scanners
 pub async fn create_security_scanner(
     State(state): State<AppState>,
-    Json(req): Json<CreateSecurityScannerRequest>,
+    ValidatedJson(req): ValidatedJson<CreateSecurityScannerRequest>,
 ) -> ApiResult<Json<SecurityScanner>> {
     // In production, api_key should be encrypted before storage
     let scanner = sqlx::query_as::<_, SecurityScanner>(

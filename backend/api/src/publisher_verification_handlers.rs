@@ -5,6 +5,7 @@
 //   - Validates publisher identity (email ownership).
 //   - Returns verification status and badge metadata.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -111,7 +112,7 @@ fn check_token(_email: &str, token: Option<&str>) -> bool {
 pub async fn verify_publisher(
     State(state): State<AppState>,
     Path(publisher_id): Path<Uuid>,
-    Json(body): Json<PublisherVerifyRequest>,
+    ValidatedJson(body): ValidatedJson<PublisherVerifyRequest>,
 ) -> ApiResult<(StatusCode, Json<PublisherVerifyResponse>)> {
     // 1. Validate email format.
     if !is_valid_email(&body.email) {

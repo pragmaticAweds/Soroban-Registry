@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     Json,
@@ -111,7 +112,7 @@ pub async fn get_deprecation_info(
 pub async fn deprecate_contract(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<DeprecateContractRequest>,
+    ValidatedJson(req): ValidatedJson<DeprecateContractRequest>,
 ) -> ApiResult<Json<DeprecationInfo>> {
     let (contract_uuid, contract_id) = fetch_contract_identity(&state, &id).await?;
 

@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{extract::State, http::StatusCode, Json};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
@@ -61,7 +62,7 @@ pub struct RecentError {
 
 pub async fn report_error(
     State(state): State<AppState>,
-    Json(payload): Json<ErrorReportRequest>,
+    ValidatedJson(payload): ValidatedJson<ErrorReportRequest>,
 ) -> Result<(StatusCode, Json<ErrorReportResponse>), ApiError> {
     let message = truncate(payload.message.trim(), MAX_MESSAGE_LEN);
     if message.is_empty() {

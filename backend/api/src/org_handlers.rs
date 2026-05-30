@@ -3,6 +3,7 @@ use crate::{
     error::{ApiError, ApiResult},
     state::AppState,
 };
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -25,7 +26,7 @@ fn db_internal_error(operation: &str, err: sqlx::Error) -> ApiError {
 pub async fn create_organization(
     State(state): State<AppState>,
     claims: AuthClaims,
-    Json(payload): Json<CreateOrganizationRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateOrganizationRequest>,
 ) -> ApiResult<(StatusCode, Json<Organization>)> {
     let mut tx = state
         .db
@@ -120,7 +121,7 @@ pub async fn update_organization(
     State(state): State<AppState>,
     claims: AuthClaims,
     Path(id): Path<Uuid>,
-    Json(payload): Json<UpdateOrganizationRequest>,
+    ValidatedJson(payload): ValidatedJson<UpdateOrganizationRequest>,
 ) -> ApiResult<Json<Organization>> {
     // Check if user is Admin of the org
     check_org_role(&state.db, id, &claims.sub, OrganizationRole::Admin).await?;
@@ -212,7 +213,7 @@ pub async fn invite_member(
     State(state): State<AppState>,
     claims: AuthClaims,
     Path(id): Path<Uuid>,
-    Json(payload): Json<InviteMemberRequest>,
+    ValidatedJson(payload): ValidatedJson<InviteMemberRequest>,
 ) -> ApiResult<StatusCode> {
     // Check if user is an Admin of the org
     check_org_role(&state.db, id, &claims.sub, OrganizationRole::Admin).await?;

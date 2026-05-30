@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -295,7 +296,7 @@ async fn evaluate_proposal_status(
 )]
 pub async fn create_proposal(
     State(state): State<AppState>,
-    Json(payload): Json<CreateProposalRequest>,
+    ValidatedJson(payload): ValidatedJson<CreateProposalRequest>,
 ) -> ApiResult<Json<GovernanceProposal>> {
     if payload.title.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -466,7 +467,7 @@ pub async fn get_proposal(
 pub async fn cast_vote(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<CastVoteRequest>,
+    ValidatedJson(payload): ValidatedJson<CastVoteRequest>,
 ) -> ApiResult<Json<GovernanceVote>> {
     let proposal_id = Uuid::parse_str(&id)
         .map_err(|_| ApiError::bad_request("InvalidProposalId", "proposal id must be a UUID"))?;
@@ -741,7 +742,7 @@ pub async fn list_voting_rights(
 pub async fn upsert_voting_rights(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(payload): Json<UpsertVotingRightsRequest>,
+    ValidatedJson(payload): ValidatedJson<UpsertVotingRightsRequest>,
 ) -> ApiResult<Json<GovernanceVotingRight>> {
     let contract_id = Uuid::parse_str(&id)
         .map_err(|_| ApiError::bad_request("InvalidContractId", "contract id must be a UUID"))?;

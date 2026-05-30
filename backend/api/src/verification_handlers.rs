@@ -4,6 +4,7 @@
 //! GET  /api/contracts/{id}/verification-status   – current status with 1-hour cache
 //! GET  /api/contracts/{id}/verification-history  – chronological audit trail
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -133,7 +134,7 @@ async fn resolve_contract_uuid(state: &AppState, id: &str) -> ApiResult<(Uuid, S
 pub async fn submit_contract_verification(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<ContractVerifyRequest>,
+    ValidatedJson(req): ValidatedJson<ContractVerifyRequest>,
 ) -> ApiResult<Json<VerificationSubmitResponse>> {
     let (contract_uuid, contract_address) = resolve_contract_uuid(&state, &id).await?;
 

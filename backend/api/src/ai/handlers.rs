@@ -6,6 +6,7 @@ use crate::ai::{
 };
 use crate::error::ApiError;
 use crate::state::AppState;
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Json, Path, Query, State},
     http::StatusCode,
@@ -68,7 +69,7 @@ pub struct SessionResponse {
 /// AI Chat handler - general Q&A
 pub async fn ai_chat_handler(
     State(state): State<AppState>,
-    Json(payload): Json<ChatRequest>,
+    ValidatedJson(payload): ValidatedJson<ChatRequest>,
 ) -> Result<Json<ChatResponse>, ApiError> {
     // Validate AI is configured
     let ai_service = state.ai_service.as_ref().ok_or_else(|| {
@@ -487,7 +488,7 @@ pub async fn explain_contract_handler(
 pub async fn suggest_code_handler(
     State(state): State<AppState>,
     Path(contract_id): Path<String>,
-    Json(payload): Json<SuggestRequest>,
+    ValidatedJson(payload): ValidatedJson<SuggestRequest>,
 ) -> Result<Json<SuggestResponse>, ApiError> {
     let ai_service = state.ai_service.as_ref().ok_or_else(|| {
         ApiError::new(

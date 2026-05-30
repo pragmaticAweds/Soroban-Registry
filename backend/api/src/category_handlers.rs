@@ -13,6 +13,7 @@
 //! `force=true` query parameter is supplied, in which case those contracts have
 //! their category field cleared before the category row is removed.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -239,7 +240,7 @@ pub async fn get_category(
 )]
 pub async fn create_category(
     State(state): State<AppState>,
-    Json(req): Json<CreateCategoryRequest>,
+    ValidatedJson(req): ValidatedJson<CreateCategoryRequest>,
 ) -> ApiResult<(StatusCode, Json<CategoryResponse>)> {
     let name = req.name.trim().to_string();
     if name.is_empty() || name.len() > 100 {
@@ -322,7 +323,7 @@ pub async fn create_category(
 pub async fn update_category(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<UpdateCategoryRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateCategoryRequest>,
 ) -> ApiResult<Json<CategoryResponse>> {
     let category_uuid = parse_category_id(&id)?;
 

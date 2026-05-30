@@ -66,6 +66,8 @@ pub mod extractors;
 #[allow(dead_code)]
 pub mod payload_size;
 #[allow(dead_code)]
+pub mod handler_requests;
+#[allow(dead_code)]
 pub mod requests;
 #[allow(dead_code)]
 pub mod sanitizers;
@@ -85,6 +87,10 @@ mod integration_guide;
 // Re-export commonly used items
 #[allow(unused_imports)]
 pub use enhanced_extractors::{validate_request, validate_response_schema_dev, ValidationRule};
+#[allow(unused_imports)]
+pub use handler_requests::{
+    BatchContractIdsRequest, RecordMetricsBatchRequest, ValidatedJsonBody,
+};
 #[allow(unused_imports)]
 pub use extractors::{
     FieldError, Validatable, ValidatedJson, ValidatedPath, ValidatedQuery, ValidationBuilder,

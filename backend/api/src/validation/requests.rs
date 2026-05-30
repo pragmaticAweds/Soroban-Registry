@@ -774,14 +774,17 @@ impl Validatable for ContractImportRequest {
 
 impl Validatable for SaveFavoriteSearchRequest {
     fn sanitize(&mut self) {
+        self.user_address = normalize_stellar_address(&self.user_address);
         self.name = sanitize_name(&self.name);
+        super::sanitizers::sanitize_json_value(&mut self.query_json);
     }
 
     fn validate(&self) -> Result<(), Vec<FieldError>> {
         let mut builder = ValidationBuilder::new();
+        builder.check("user_address", || validate_stellar_address(&self.user_address));
         builder.check("name", || validate_length(&self.name, 1, 100));
         builder.check("name", || validate_no_xss(&self.name));
-        // QueryNode validation could be added here if needed
+        builder.check("query_json", || validate_json_depth(&self.query_json, MAX_JSON_DEPTH));
         builder.build()
     }
 }

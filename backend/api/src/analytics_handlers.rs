@@ -10,6 +10,7 @@
 //!                                       by category and by network, enabling
 //!                                       trending-by-category identification.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::{header, HeaderValue, StatusCode},
@@ -229,7 +230,7 @@ pub struct WebVitalMetric {
 pub async fn record_web_vitals(
     State(state): State<AppState>,
     headers: axum::http::HeaderMap,
-    Json(metric): Json<WebVitalMetric>,
+    ValidatedJson(metric): ValidatedJson<WebVitalMetric>,
 ) -> ApiResult<StatusCode> {
     let user_agent = headers
         .get(axum::http::header::USER_AGENT)

@@ -7,6 +7,7 @@
 //   3. Compute a robustness score = killed_mutants / total_mutants.
 //   4. Store and expose the results via REST endpoints.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -212,7 +213,7 @@ fn run_test_suite_against(mutation: &mut Mutation) {
 pub async fn run_mutation_tests(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(body): Json<RunMutationTestRequest>,
+    ValidatedJson(body): ValidatedJson<RunMutationTestRequest>,
 ) -> ApiResult<(StatusCode, Json<MutationRunReport>)> {
     // Verify contract exists and fetch its ABI (stored as JSON in contract_abis).
     let contract_exists: bool =

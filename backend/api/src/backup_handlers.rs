@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,
@@ -22,7 +23,7 @@ use crate::{
 pub async fn create_backup(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<CreateBackupRequest>,
+    ValidatedJson(req): ValidatedJson<CreateBackupRequest>,
 ) -> ApiResult<Json<ContractBackup>> {
     let contract: shared::Contract = sqlx::query_as("SELECT * FROM contracts WHERE id = $1")
         .bind(contract_id)
@@ -90,7 +91,7 @@ pub async fn list_backups(
 pub async fn restore_backup(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<RestoreBackupRequest>,
+    ValidatedJson(req): ValidatedJson<RestoreBackupRequest>,
 ) -> ApiResult<Json<BackupRestoration>> {
     let start = std::time::Instant::now();
 
@@ -192,7 +193,7 @@ pub async fn get_backup_stats(
 pub async fn create_disaster_recovery_plan(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<CreateDisasterRecoveryPlanRequest>,
+    ValidatedJson(req): ValidatedJson<CreateDisasterRecoveryPlanRequest>,
 ) -> ApiResult<Json<DisasterRecoveryPlan>> {
     let drp = sqlx::query_as::<_, DisasterRecoveryPlan>(
         r#"
@@ -237,7 +238,7 @@ pub async fn get_disaster_recovery_plan(
 pub async fn execute_recovery(
     State(state): State<AppState>,
     Path(contract_id): Path<Uuid>,
-    Json(req): Json<ExecuteRecoveryRequest>,
+    ValidatedJson(req): ValidatedJson<ExecuteRecoveryRequest>,
 ) -> ApiResult<Json<RecoveryMetrics>> {
     let start_time = std::time::Instant::now();
 

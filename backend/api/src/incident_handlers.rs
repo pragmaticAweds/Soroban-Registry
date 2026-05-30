@@ -6,6 +6,7 @@
 // Linked to affected contracts, with timeline updates, advisory publishing,
 // user notifications, and report generation.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     http::StatusCode,
@@ -219,7 +220,7 @@ pub struct ListIncidentsResponse {
 /// Report a new security incident and link it to affected contracts.
 pub async fn report_incident(
     State(state): State<AppState>,
-    Json(req): Json<ReportIncidentRequest>,
+    ValidatedJson(req): ValidatedJson<ReportIncidentRequest>,
 ) -> ApiResult<(StatusCode, Json<SecurityIncidentDetail>)> {
     if req.title.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -404,7 +405,7 @@ pub async fn get_incident(
 pub async fn update_incident_status(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<UpdateIncidentStatusRequest>,
+    ValidatedJson(req): ValidatedJson<UpdateIncidentStatusRequest>,
 ) -> ApiResult<Json<SecurityIncidentDetail>> {
     if req.author.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -472,7 +473,7 @@ pub async fn update_incident_status(
 pub async fn add_incident_update(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<AddIncidentUpdateRequest>,
+    ValidatedJson(req): ValidatedJson<AddIncidentUpdateRequest>,
 ) -> ApiResult<Json<IncidentUpdate>> {
     if req.author.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -510,7 +511,7 @@ pub async fn add_incident_update(
 pub async fn add_affected_contract(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<AddAffectedContractRequest>,
+    ValidatedJson(req): ValidatedJson<AddAffectedContractRequest>,
 ) -> ApiResult<StatusCode> {
     fetch_incident(&state, id).await?;
 
@@ -555,7 +556,7 @@ pub async fn get_contract_incidents(
 /// Publish a security advisory (optionally linked to an incident).
 pub async fn publish_advisory(
     State(state): State<AppState>,
-    Json(req): Json<PublishAdvisoryRequest>,
+    ValidatedJson(req): ValidatedJson<PublishAdvisoryRequest>,
 ) -> ApiResult<(StatusCode, Json<SecurityAdvisory>)> {
     if req.title.trim().is_empty() {
         return Err(ApiError::bad_request(
@@ -624,7 +625,7 @@ pub async fn get_advisory(
 pub async fn notify_affected_users(
     State(state): State<AppState>,
     Path(id): Path<Uuid>,
-    Json(req): Json<NotifyAffectedUsersRequest>,
+    ValidatedJson(req): ValidatedJson<NotifyAffectedUsersRequest>,
 ) -> ApiResult<Json<NotifyAffectedUsersResponse>> {
     let incident = fetch_incident(&state, id).await?;
 

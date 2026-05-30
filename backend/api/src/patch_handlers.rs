@@ -5,6 +5,7 @@
 // contract versions.  Full versions can be reconstructed by replaying the
 // patch chain from the initial baseline.
 
+use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     Json,
@@ -536,7 +537,7 @@ pub async fn get_patch_between_versions(
 pub async fn reconstruct_contract_version(
     State(state): State<AppState>,
     Path(id): Path<String>,
-    Json(req): Json<ReconstructRequest>,
+    ValidatedJson(req): ValidatedJson<ReconstructRequest>,
 ) -> ApiResult<Json<ReconstructedVersion>> {
     let contract_uuid = resolve_contract_uuid(&state, &id).await?;
 
@@ -570,7 +571,7 @@ pub async fn reconstruct_contract_version(
 )]
 pub async fn bulk_apply_patches(
     State(state): State<AppState>,
-    Json(req): Json<BulkApplyRequest>,
+    ValidatedJson(req): ValidatedJson<BulkApplyRequest>,
 ) -> ApiResult<Json<BulkApplyResponse>> {
     if req.targets.is_empty() {
         return Err(ApiError::bad_request(
