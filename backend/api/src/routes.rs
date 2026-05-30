@@ -923,6 +923,8 @@ pub fn performance_routes() -> Router<AppState> {
 pub fn admin_routes() -> Router<AppState> {
     Router::new()
         .route("/api/admin/audit-logs", get(handlers::get_all_audit_logs))
+        .route("/api/admin/audit-logs/export", get(handlers::handle_export_audit))
+        .route("/api/admin/audit-logs/cleanup", post(handlers::handle_retention_cleanup)) 
         .merge(migration_routes())
         // Category management (issue #414) – admin-only write endpoints
         .route(
