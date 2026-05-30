@@ -17,6 +17,7 @@ mod codegen;
 mod commands;
 mod compare;
 mod config;
+mod contract_deploy;
 mod contract_risk;
 mod contract_register;
 mod api_key;
@@ -2173,6 +2174,56 @@ pub enum ProfileCommands {
         #[arg(long)]
         json: bool,
     },
+
+    /// Deploy and register a new contract in the registry
+    ///
+    /// Usage: soroban-registry contract deploy <WASM_PATH> --name <NAME> --network <NETWORK>
+    ///        [--description <DESC>] [--category <CAT>] [--icon <ICON_PATH>]
+    ///        [--interactive] [--publisher <ADDRESS>] [--tags <TAGS>]
+    Deploy {
+        /// Path to the WASM binary file
+        wasm_path: String,
+
+        /// Contract name (human-readable)
+        #[arg(long)]
+        name: Option<String>,
+
+        /// Contract description
+        #[arg(long)]
+        description: Option<String>,
+
+        /// Contract category (DeFi, Token, Oracle, NFT, Utility, Other)
+        #[arg(long)]
+        category: Option<String>,
+
+        /// Stellar network (mainnet | testnet | futurenet)
+        #[arg(long, default_value = "testnet")]
+        network: String,
+
+        /// Path to contract icon file (PNG, JPG, SVG)
+        #[arg(long)]
+        icon: Option<String>,
+
+        /// Enable interactive mode for guided deployment
+        #[arg(long)]
+        interactive: bool,
+
+        /// Publisher's Stellar address (if not set, uses default publisher)
+        #[arg(long)]
+        publisher: Option<String>,
+
+        /// Comma-separated list of tags for the contract
+        #[arg(long)]
+        tags: Option<String>,
+
+        /// Skip ABI extraction and deployment verification
+        #[arg(long)]
+        skip_abi: bool,
+
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 /// Sub-commands for the `webhook` group
@@ -3674,6 +3725,37 @@ pub async fn dispatch_command(
                 );
                 contracts::run_details(&cli.api_url, &address, &network, json).await?;
             }
+            ContractCommands::Deploy {
+                wasm_path,
+                name,
+                description,
+                category,
+                network,
+                icon,
+                interactive,
+                publisher,
+                tags,
+                skip_abi,
+                json,
+            } => {
+                log::debug!(
+                    "Command: contract deploy | wasm_path={} network={} interactive={}",
+                    wasm_path,
+                    network,
+                    interactive
+                );
+                contract_deploy::run_deploy(
+                    &cli.api_url,
+                    &wasm_path,
+                    name.as_deref(),
+                    description.as_deref(),
+                    category.as_deref(),
+                    &network,
+                    icon.as_deref(),
+                    interactive,
+                    publisher.as_deref(),
+                    tags.as_deref(),
+                    skip_abi,
             ContractCommands::Risk {
                 address,
                 network,
