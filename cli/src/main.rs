@@ -2,9 +2,14 @@
 
 mod analytics;
 mod analyze;
+mod auth;
 mod audit_command;
 mod backup;
 mod batch_ops;
+mod batch_audit;
+mod batch_deploy;
+mod batch_export;
+mod batch_import;
 mod batch_register;
 mod batch_verify;
 mod cicd;
@@ -12,6 +17,7 @@ mod codegen;
 mod commands;
 mod compare;
 mod config;
+mod contract_register;
 mod api_key;
 mod contract_dependency;
 mod contract_highlight;
@@ -597,6 +603,12 @@ pub enum Commands {
         action: ConfigSubcommands,
     },
 
+    /// Manage authentication sessions and API tokens
+    Auth {
+        #[command(subcommand)]
+        action: AuthCommands,
+    },
+
     /// Inspect and modify contract state (dev/test mutation only)
     State {
         #[command(subcommand)]
@@ -818,6 +830,96 @@ pub enum Commands {
         #[arg(long)]
         dry_run: bool,
 
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Audit multiple contracts in batch for security and best practices
+    BatchAudit {
+        /// File containing contract paths (one per line) or comma-separated paths
+        file: String,
+        /// Report format: text, json, markdown
+        #[arg(long, default_value = "text")]
+        format: String,
+        /// Output directory for generated reports
+        #[arg(long)]
+        output_dir: Option<String>,
+        /// Fail on findings at or above this severity
+        #[arg(long)]
+        fail_on: Option<String>,
+        /// Show only high and critical findings
+        #[arg(long)]
+        high_risk: bool,
+        /// Audit profile: basic, standard, comprehensive
+        #[arg(long, default_value = "standard")]
+        profile: String,
+        /// Export audit findings to a file
+        #[arg(long)]
+        export: Option<String>,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Deploy a contract WASM to multiple networks
+    BatchDeploy {
+        /// Path to the WASM file
+        wasm_file: String,
+        /// Comma-separated target networks (mainnet,testnet,futurenet)
+        #[arg(long, default_value = "testnet")]
+        networks: String,
+        /// Signer Stellar address or secret
+        #[arg(long)]
+        signer: String,
+        /// Stop and report failure if any deployment fails (no on-chain rollback)
+        #[arg(long)]
+        atomic: bool,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Export multiple contracts in bulk
+    BatchExport {
+        /// Output directory for exported files
+        output_dir: String,
+        /// Filter query (e.g. network=testnet or category=defi)
+        #[arg(long)]
+        filter: Option<String>,
+        /// Output format: json, csv, archive
+        #[arg(long, default_value = "json")]
+        format: String,
+        /// Organize output by network/category subdirectories
+        #[arg(long)]
+        organize: bool,
+        /// Compress the output directory into a .tar.gz
+        #[arg(long)]
+        compress: bool,
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
+    /// Import contracts in bulk from a directory
+    BatchImport {
+        /// Input directory containing contract files to import
+        input_dir: String,
+        /// Force a specific format (json, csv, archive); auto-detected if omitted
+        #[arg(long)]
+        format: Option<String>,
+        /// How to handle duplicates: skip or fail
+        #[arg(long, default_value = "skip")]
+        on_duplicate: String,
+        /// Preview what would be imported without committing
+        #[arg(long)]
+        dry_run: bool,
+        /// Abort on first error; report atomically
+        #[arg(long)]
+        atomic: bool,
+        /// Output directory for archive imports
+        #[arg(long, default_value = "./imported")]
+        output_dir: String,
         /// Output results as machine-readable JSON
         #[arg(long)]
         json: bool,
@@ -1075,6 +1177,49 @@ pub enum ConfigSubcommands {
         version: i32,
         #[arg(long)]
         created_by: String,
+    },
+}
+
+#[derive(Debug, Subcommand)]
+pub enum AuthCommands {
+    /// Sign in with a GitHub account, Stellar wallet, or API key
+    Login {
+        /// Authentication method to use
+        #[arg(long, value_enum)]
+        method: Option<crate::auth::AuthMethod>,
+
+        /// Identity to authenticate with
+        #[arg(long)]
+        identity: Option<String>,
+
+        /// Secret credential or signing seed
+        #[arg(long)]
+        secret: Option<String>,
+
+        /// Comma-separated token scopes
+        #[arg(long, value_delimiter = ',')]
+        scopes: Vec<String>,
+
+        /// Token lifetime, e.g. 1h, 30m, 7d, or seconds
+        #[arg(long)]
+        expires: Option<String>,
+    },
+
+    /// Sign out and remove stored credentials
+    Logout {},
+
+    /// Show the current authentication state
+    Status {},
+
+    /// Print the current API token, refreshing it when possible
+    Token {
+        /// Comma-separated token scopes
+        #[arg(long, value_delimiter = ',')]
+        scopes: Vec<String>,
+
+        /// Token lifetime, e.g. 1h, 30m, 7d, or seconds
+        #[arg(long)]
+        expires: Option<String>,
     },
 }
 
@@ -1455,6 +1600,21 @@ pub enum KeysCommands {
 /// Sub-commands for the `contract` group (#522)
 #[derive(Debug, Subcommand)]
 pub enum ContractCommands {
+    /// Register one or more contracts in the registry
+    Register {
+        /// Path to a YAML or JSON metadata file
+        #[arg(long)]
+        file: Option<String>,
+
+        /// Enable repeated prompts for multiple contracts
+        #[arg(long)]
+        batch: bool,
+
+        /// Output results as machine-readable JSON
+        #[arg(long)]
+        json: bool,
+    },
+
     /// Verify a deployed contract's authenticity against the on-chain registry
     ///
     /// Usage: soroban-registry contract verify <address> --network <network> [--json]
@@ -1523,6 +1683,51 @@ pub enum ContractCommands {
         depth: u32,
         #[arg(long)]
         json: bool,
+    },
+
+    /// Import contracts into the registry from an external file (#831)
+    ///
+    /// Supports JSON, JSONL (newline-delimited JSON), CSV, and archive formats.
+    ///
+    /// Usage: soroban-registry contract import <INPUT_FILE> [OPTIONS]
+    Import {
+        /// Path to the input file (JSON, JSONL, CSV, or .tar.gz archive)
+        input_file: String,
+
+        /// Input format override (json | jsonl | csv | sqlite | archive).
+        /// Inferred from the file extension when omitted.
+        #[arg(long, short = 'f')]
+        format: Option<String>,
+
+        /// How to handle duplicate contracts: skip | update | fail (default: skip)
+        #[arg(long, default_value = "skip")]
+        on_duplicate: String,
+
+        /// Network alias mappings, e.g. --network-map futurenet=testnet
+        /// May be repeated for multiple aliases.
+        #[arg(long = "network-map")]
+        network_map: Vec<String>,
+
+        /// Preview what would be imported without writing to the registry
+        #[arg(long)]
+        dry_run: bool,
+
+        /// Validate all records before importing; abort on any error
+        #[arg(long)]
+        validate: bool,
+
+        /// Roll back all successful imports if any record fails
+        #[arg(long)]
+        atomic: bool,
+
+        /// Write the JSON import-summary report to this file path
+        /// (prints to stdout when omitted)
+        #[arg(long, short = 'o')]
+        report_output: Option<String>,
+
+        /// Directory for archive extraction (archive format only)
+        #[arg(long, default_value = "./imported")]
+        output_dir: String,
     },
 }
 
@@ -2197,16 +2402,20 @@ pub async fn dispatch_command(
                 validate,
                 dry_run
             );
-            crate::import::run(
-                &cli.api_url,
-                &file,
-                format.as_deref(),
-                network,
-                &output_dir,
+            let opts = crate::import::ImportOptions {
+                api_url: &cli.api_url,
+                file_path: &file,
+                format: format.as_deref(),
+                network_flag: network,
+                output_dir: &output_dir,
                 validate,
                 dry_run,
-            )
-            .await?;
+                on_duplicate: crate::import::OnDuplicate::Skip,
+                network_map: std::collections::HashMap::new(),
+                atomic: false,
+                report_output: None,
+            };
+            crate::import::run(opts).await?;
         }
         Commands::Doc {
             contract_path,
@@ -2639,6 +2848,66 @@ pub async fn dispatch_command(
                 .await?;
             }
         },
+        Commands::Auth { action } => match action {
+            AuthCommands::Login {
+                method,
+                identity,
+                secret,
+                scopes,
+                expires,
+            } => {
+                let method = match method {
+                    Some(method) => method,
+                    None => {
+                        let selected = wizard::prompt_with_validation(
+                            "Authentication method [github|stellar|api-key]",
+                            Some("stellar".to_string()),
+                            |value| {
+                                matches!(
+                                    value.trim().to_ascii_lowercase().as_str(),
+                                    "github" | "stellar" | "api-key"
+                                )
+                            },
+                            "Choose github, stellar, or api-key.",
+                        )?;
+                        match selected.trim().to_ascii_lowercase().as_str() {
+                            "github" => crate::auth::AuthMethod::Github,
+                            "stellar" => crate::auth::AuthMethod::Stellar,
+                            "api-key" => crate::auth::AuthMethod::ApiKey,
+                            _ => unreachable!(),
+                        }
+                    }
+                };
+                log::debug!(
+                    "Command: auth login | method={} identity={:?} scopes={:?} expires={:?}",
+                    method,
+                    identity,
+                    scopes,
+                    expires
+                );
+                auth::login(
+                    &cli.api_url,
+                    method,
+                    identity.as_deref(),
+                    secret.as_deref(),
+                    scopes,
+                    expires.as_deref(),
+                )
+                .await?;
+            }
+            AuthCommands::Logout {} => {
+                log::debug!("Command: auth logout");
+                auth::logout()?;
+            }
+            AuthCommands::Status {} => {
+                log::debug!("Command: auth status");
+                auth::status(&cli.api_url).await?;
+            }
+            AuthCommands::Token { scopes, expires } => {
+                log::debug!("Command: auth token | scopes={:?} expires={:?}", scopes, expires);
+                auth::token(&cli.api_url, scopes, expires.as_deref()).await?;
+            }
+        },
         Commands::State { action } => match action {
             StateSubcommands::Get {
                 contract_id,
@@ -2895,6 +3164,16 @@ pub async fn dispatch_command(
         },
         // ── Contract verify command (#522) ───────────────────────────────────
         Commands::Contract { action } => match action {
+            ContractCommands::Register { file, batch, json } => {
+                log::debug!(
+                    "Command: contract register | file={:?} batch={} json={}",
+                    file,
+                    batch,
+                    json
+                );
+                contract_register::run(&cli.api_url, cfg_network, file.as_deref(), batch, json)
+                    .await?;
+            }
             ContractCommands::Verify {
                 address,
                 network,
@@ -2952,6 +3231,43 @@ pub async fn dispatch_command(
             } => {
                 log::debug!("Command: contract dependency | address={} depth={}", address, depth);
                 contract_dependency::run(&cli.api_url, &address, depth, json).await?;
+            }
+            ContractCommands::Import {
+                input_file,
+                format,
+                on_duplicate,
+                network_map,
+                dry_run,
+                validate,
+                atomic,
+                report_output,
+                output_dir,
+            } => {
+                log::debug!(
+                    "Command: contract import | file={} format={:?} on_duplicate={} dry_run={} validate={} atomic={}",
+                    input_file,
+                    format,
+                    on_duplicate,
+                    dry_run,
+                    validate,
+                    atomic
+                );
+                let dup_strategy = crate::import::OnDuplicate::parse(&on_duplicate)?;
+                let net_map = crate::import::parse_network_map(&network_map)?;
+                let opts = crate::import::ImportOptions {
+                    api_url: &cli.api_url,
+                    file_path: &input_file,
+                    format: format.as_deref(),
+                    network_flag: cli.network.as_deref(),
+                    output_dir: &output_dir,
+                    validate,
+                    dry_run,
+                    on_duplicate: dup_strategy,
+                    network_map: net_map,
+                    atomic,
+                    report_output,
+                };
+                crate::import::run(opts).await?;
             }
         },
         Commands::ApiKey { action } => match action {
@@ -3140,6 +3456,80 @@ pub async fn dispatch_command(
                 &manifest,
                 publisher.as_deref(),
                 dry_run,
+                json,
+            )
+            .await?;
+        }
+        Commands::BatchAudit {
+            file,
+            format,
+            output_dir,
+            fail_on,
+            high_risk,
+            profile,
+            export,
+            json,
+        } => {
+            log::debug!("Command: batch-audit | file={}", file);
+            batch_audit::run_batch_audit(
+                &file,
+                &format,
+                output_dir.as_deref(),
+                fail_on.as_deref(),
+                high_risk,
+                &profile,
+                export.as_deref(),
+                json,
+            )?;
+        }
+        Commands::BatchDeploy {
+            wasm_file,
+            networks,
+            signer,
+            atomic,
+            json,
+        } => {
+            log::debug!("Command: batch-deploy | wasm={}", wasm_file);
+            batch_deploy::run_batch_deploy(&wasm_file, &networks, &signer, atomic, json)?;
+        }
+        Commands::BatchExport {
+            output_dir,
+            filter,
+            format,
+            organize,
+            compress,
+            json,
+        } => {
+            log::debug!("Command: batch-export | output_dir={}", output_dir);
+            batch_export::run_batch_export(
+                &cli.api_url,
+                &output_dir,
+                filter.as_deref(),
+                &format,
+                organize,
+                compress,
+                json,
+            )
+            .await?;
+        }
+        Commands::BatchImport {
+            input_dir,
+            format,
+            on_duplicate,
+            dry_run,
+            atomic,
+            output_dir,
+            json,
+        } => {
+            log::debug!("Command: batch-import | input_dir={}", input_dir);
+            batch_import::run_batch_import(
+                &cli.api_url,
+                &input_dir,
+                format.as_deref(),
+                &on_duplicate,
+                dry_run,
+                atomic,
+                &output_dir,
                 json,
             )
             .await?;
