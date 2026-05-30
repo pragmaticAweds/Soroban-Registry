@@ -8,12 +8,13 @@ mod tests {
         // Test case 1: Valid WASM file with correct magic bytes
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let wasm_path = temp_dir.path().join("test.wasm");
-        
+
         // Write valid WASM magic bytes + some content
         let wasm_content = vec![
             0x00, 0x61, 0x73, 0x6d, // WASM magic bytes (\0asm)
-            0x01, 0x00, 0x00, 0x00, // Version
-            // Rest of a minimal WASM module
+            0x01, 0x00, 0x00,
+            0x00, // Version
+                  // Rest of a minimal WASM module
         ];
         std::fs::write(&wasm_path, wasm_content).expect("failed to write wasm file");
 
@@ -27,7 +28,7 @@ mod tests {
         // Test case 2: Invalid WASM file with wrong magic bytes
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let wasm_path = temp_dir.path().join("test.wasm");
-        
+
         // Write invalid magic bytes
         let invalid_content = vec![0xFF, 0xFF, 0xFF, 0xFF];
         std::fs::write(&wasm_path, invalid_content).expect("failed to write wasm file");
@@ -47,7 +48,7 @@ mod tests {
         // Test case 4: Contract hash computation
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let wasm_path = temp_dir.path().join("test.wasm");
-        
+
         let wasm_content = vec![
             0x00, 0x61, 0x73, 0x6d, // WASM magic bytes
             0x01, 0x00, 0x00, 0x00, // Version
@@ -63,7 +64,7 @@ mod tests {
         // Test case 5: PNG icon validation
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let icon_path = temp_dir.path().join("icon.png");
-        
+
         // Write valid PNG magic bytes
         let png_header = vec![137, 80, 78, 71, 13, 10, 26, 10]; // PNG signature
         std::fs::write(&icon_path, png_header).expect("failed to write png file");
@@ -76,7 +77,7 @@ mod tests {
         // Test case 6: JPG icon validation
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let icon_path = temp_dir.path().join("icon.jpg");
-        
+
         // Write valid JPG magic bytes
         let jpg_header = vec![0xFF, 0xD8, 0xFF, 0xE0]; // JPG SOI marker
         std::fs::write(&icon_path, jpg_header).expect("failed to write jpg file");
@@ -88,7 +89,7 @@ mod tests {
     fn test_category_validation() {
         // Test case 7: Valid categories
         let valid_categories = vec!["DeFi", "Token", "Oracle", "NFT", "Utility", "Other"];
-        
+
         for category in valid_categories {
             println!("  ✓ Category valid: {}", category);
         }
@@ -99,7 +100,7 @@ mod tests {
     fn test_network_validation() {
         // Test case 8: Valid networks
         let valid_networks = vec!["mainnet", "testnet", "futurenet"];
-        
+
         for network in valid_networks {
             println!("  ✓ Network valid: {}", network);
         }
@@ -204,7 +205,7 @@ mod tests {
         // Test case 23: Corrupted WASM file rejection
         let temp_dir = tempfile::tempdir().expect("failed to create temp dir");
         let wasm_path = temp_dir.path().join("corrupted.wasm");
-        
+
         // Write truncated/corrupted WASM
         let corrupted = vec![0x00, 0x61]; // Incomplete header
         std::fs::write(&wasm_path, corrupted).expect("failed to write corrupted file");
@@ -369,7 +370,8 @@ mod usage_examples {
         println!("  --network testnet \\");
         println!("  --json");
         println!("\nOutput:");
-        println!(r#"{{
+        println!(
+            r#"{{
   "status": "success",
   "deployment": {{
     "id": "550e8400-e29b-41d4-a716-446655440000",
@@ -383,7 +385,8 @@ mod usage_examples {
   }},
   "abi_functions_count": 5,
   "abi_types_count": 2
-}}"#);
+}}"#
+        );
     }
 
     #[test]

@@ -68,3 +68,6 @@ coverage/
 local-coverage/
 *storybook.log
 storybook-static
+
+CLAUDE.md
+plan.md

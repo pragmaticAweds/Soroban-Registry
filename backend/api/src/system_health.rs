@@ -1,10 +1,10 @@
+use crate::alerting::{Alert, AlertManager, AlertSeverity};
+use crate::cache::CacheLayer;
+use chrono::Utc;
 use sqlx::PgPool;
 use std::sync::Arc;
 use tokio::time::{self, Duration};
 use tracing::info;
-use chrono::Utc;
-use crate::alerting::{Alert, AlertManager, AlertSeverity};
-use crate::cache::CacheLayer;
 
 pub struct SystemHealthMonitor {
     pool: PgPool,
@@ -69,7 +69,11 @@ impl SystemHealthMonitor {
     }
 }
 
-pub fn spawn_system_health_monitor(pool: PgPool, cache: Arc<CacheLayer>, alert_mgr: Arc<AlertManager>) {
+pub fn spawn_system_health_monitor(
+    pool: PgPool,
+    cache: Arc<CacheLayer>,
+    alert_mgr: Arc<AlertManager>,
+) {
     let monitor = SystemHealthMonitor::new(pool, cache, alert_mgr);
     tokio::spawn(async move {
         monitor.run().await;

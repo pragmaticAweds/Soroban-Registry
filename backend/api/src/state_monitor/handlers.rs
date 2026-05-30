@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use crate::{
     error::ApiError,
     state::AppState,
@@ -6,7 +7,6 @@ use crate::{
         AnomalyInfo, StateChangeEntry,
     },
 };
-use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, Query, State},
     Json,
@@ -230,16 +230,12 @@ pub async fn get_state_diff_handler(
 }
 
 fn parse_contract_id(s: &str) -> Result<Uuid, ApiError> {
-    Uuid::parse_str(s)
-        .map_err(|_| ApiError::bad_request_msg("contract_id must be a valid UUID"))
+    Uuid::parse_str(s).map_err(|_| ApiError::bad_request_msg("contract_id must be a valid UUID"))
 }
 
 /// Validate exactly-one-of(ledger, timestamp). Returns 400 with a
 /// clear message otherwise.
-fn parse_anchor(
-    ledger: Option<i64>,
-    timestamp: Option<DateTime<Utc>>,
-) -> Result<Anchor, ApiError> {
+fn parse_anchor(ledger: Option<i64>, timestamp: Option<DateTime<Utc>>) -> Result<Anchor, ApiError> {
     match (ledger, timestamp) {
         (Some(_), Some(_)) => Err(ApiError::bad_request_msg(
             "supply exactly one of `ledger` or `timestamp`, not both",
@@ -247,9 +243,7 @@ fn parse_anchor(
         (None, None) => Err(ApiError::bad_request_msg(
             "supply one of `ledger` or `timestamp`",
         )),
-        (Some(n), None) if n < 0 => {
-            Err(ApiError::bad_request_msg("`ledger` must be non-negative"))
-        }
+        (Some(n), None) if n < 0 => Err(ApiError::bad_request_msg("`ledger` must be non-negative")),
         (Some(n), None) => Ok(Anchor::Ledger(n)),
         (None, Some(t)) => Ok(Anchor::Timestamp(t)),
     }
@@ -258,7 +252,9 @@ fn parse_anchor(
 fn prefix_param_error(err: ApiError, prefix: &str) -> ApiError {
     // The diff endpoint takes two anchors with `from_`/`to_` prefixes
     // — rewrite the inner error so the user sees which side is wrong.
-    let msg = err.to_string().replace("`ledger`", &format!("`{prefix}ledger`"))
+    let msg = err
+        .to_string()
+        .replace("`ledger`", &format!("`{prefix}ledger`"))
         .replace("`timestamp`", &format!("`{prefix}timestamp`"));
     ApiError::bad_request_msg(msg)
 }

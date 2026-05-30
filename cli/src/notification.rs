@@ -71,10 +71,7 @@ impl std::str::FromStr for Channel {
             "email" => Ok(Channel::Email),
             "webhook" => Ok(Channel::Webhook),
             "cli" => Ok(Channel::Cli),
-            _ => anyhow::bail!(
-                "Unknown channel '{}'. Valid: email, webhook, cli",
-                s
-            ),
+            _ => anyhow::bail!("Unknown channel '{}'. Valid: email, webhook, cli", s),
         }
     }
 }
@@ -104,10 +101,7 @@ impl std::str::FromStr for Frequency {
             "instant" => Ok(Frequency::Instant),
             "daily" => Ok(Frequency::Daily),
             "weekly" => Ok(Frequency::Weekly),
-            _ => anyhow::bail!(
-                "Unknown frequency '{}'. Valid: instant, daily, weekly",
-                s
-            ),
+            _ => anyhow::bail!("Unknown frequency '{}'. Valid: instant, daily, weekly", s),
         }
     }
 }
@@ -143,10 +137,9 @@ fn load_store() -> Result<NotificationStore> {
     if !path.exists() {
         return Ok(NotificationStore::default());
     }
-    let raw = fs::read_to_string(&path)
-        .with_context(|| format!("Failed to read {}", path.display()))?;
-    serde_json::from_str(&raw)
-        .with_context(|| format!("Failed to parse {}", path.display()))
+    let raw =
+        fs::read_to_string(&path).with_context(|| format!("Failed to read {}", path.display()))?;
+    serde_json::from_str(&raw).with_context(|| format!("Failed to parse {}", path.display()))
 }
 
 fn save_store(store: &NotificationStore) -> Result<()> {
@@ -158,8 +151,7 @@ fn save_store(store: &NotificationStore) -> Result<()> {
             .with_context(|| format!("Failed to create dir {}", parent.display()))?;
     }
     let json = serde_json::to_string_pretty(store)?;
-    fs::write(&path, json)
-        .with_context(|| format!("Failed to write {}", path.display()))
+    fs::write(&path, json).with_context(|| format!("Failed to write {}", path.display()))
 }
 
 // ── Handlers ──────────────────────────────────────────────────────────────────
@@ -177,10 +169,8 @@ pub fn subscribe(
         .iter()
         .map(|s| s.parse())
         .collect::<Result<_>>()?;
-    let parsed_channels: Vec<Channel> = channels
-        .iter()
-        .map(|s| s.parse())
-        .collect::<Result<_>>()?;
+    let parsed_channels: Vec<Channel> =
+        channels.iter().map(|s| s.parse()).collect::<Result<_>>()?;
     let freq: Frequency = frequency.parse()?;
 
     let mut store = load_store()?;
@@ -208,15 +198,27 @@ pub fn subscribe(
         created_at: chrono::Utc::now().to_rfc3339(),
     };
 
-    println!("{} Subscribed to notifications for {}", "✓".green(), address.bold());
+    println!(
+        "{} Subscribed to notifications for {}",
+        "✓".green(),
+        address.bold()
+    );
     println!("  Rule ID : {}", rule.id.dimmed());
     println!(
         "  Alerts  : {}",
-        rule.alert_types.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", ")
+        rule.alert_types
+            .iter()
+            .map(|a| a.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
     );
     println!(
         "  Channels: {}",
-        rule.channels.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", ")
+        rule.channels
+            .iter()
+            .map(|c| c.to_string())
+            .collect::<Vec<_>>()
+            .join(", ")
     );
     println!("  Frequency: {}", rule.frequency);
 
@@ -230,10 +232,18 @@ pub fn unsubscribe(address: &str) -> Result<()> {
     store.rules.retain(|r| r.address != address);
 
     if store.rules.len() == before {
-        println!("{} No subscription found for {}", "!".yellow(), address.bold());
+        println!(
+            "{} No subscription found for {}",
+            "!".yellow(),
+            address.bold()
+        );
     } else {
         save_store(&store)?;
-        println!("{} Unsubscribed from notifications for {}", "✓".green(), address.bold());
+        println!(
+            "{} Unsubscribed from notifications for {}",
+            "✓".green(),
+            address.bold()
+        );
     }
     Ok(())
 }
@@ -263,19 +273,31 @@ pub fn list(address: Option<&str>, json: bool) -> Result<()> {
         println!(
             "  {} {}",
             "Alerts  :".dimmed(),
-            rule.alert_types.iter().map(|a| a.to_string()).collect::<Vec<_>>().join(", ")
+            rule.alert_types
+                .iter()
+                .map(|a| a.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
         );
         println!(
             "  {} {}",
             "Channels:".dimmed(),
-            rule.channels.iter().map(|c| c.to_string()).collect::<Vec<_>>().join(", ")
+            rule.channels
+                .iter()
+                .map(|c| c.to_string())
+                .collect::<Vec<_>>()
+                .join(", ")
         );
         println!("  {} {}", "Frequency:".dimmed(), rule.frequency);
         if !rule.networks.is_empty() {
             println!("  {} {}", "Networks:".dimmed(), rule.networks.join(", "));
         }
         if !rule.categories.is_empty() {
-            println!("  {} {}", "Categories:".dimmed(), rule.categories.join(", "));
+            println!(
+                "  {} {}",
+                "Categories:".dimmed(),
+                rule.categories.join(", ")
+            );
         }
         if let Some(target) = &rule.channel_target {
             println!("  {} {}", "Target  :".dimmed(), target);
@@ -325,7 +347,11 @@ pub fn configure(
     }
 
     save_store(&store)?;
-    println!("{} Updated notification rule for {}", "✓".green(), address.bold());
+    println!(
+        "{} Updated notification rule for {}",
+        "✓".green(),
+        address.bold()
+    );
     Ok(())
 }
 
@@ -342,7 +368,11 @@ pub fn test_notification(address: &str) -> Result<()> {
             )
         })?;
 
-    println!("{} Sending test notification for {}", "→".cyan(), address.bold());
+    println!(
+        "{} Sending test notification for {}",
+        "→".cyan(),
+        address.bold()
+    );
 
     for channel in &rule.channels {
         match channel {
@@ -351,11 +381,17 @@ pub fn test_notification(address: &str) -> Result<()> {
                     "  {} [CLI] Test alert: contract {} has a new {} event.",
                     "✓".green(),
                     address,
-                    rule.alert_types.first().map(|a| a.to_string()).unwrap_or_else(|| "update".into())
+                    rule.alert_types
+                        .first()
+                        .map(|a| a.to_string())
+                        .unwrap_or_else(|| "update".into())
                 );
             }
             Channel::Email => {
-                let target = rule.channel_target.as_deref().unwrap_or("<no email configured>");
+                let target = rule
+                    .channel_target
+                    .as_deref()
+                    .unwrap_or("<no email configured>");
                 println!(
                     "  {} [Email] Would send test alert to {}",
                     "✓".green(),
@@ -363,7 +399,10 @@ pub fn test_notification(address: &str) -> Result<()> {
                 );
             }
             Channel::Webhook => {
-                let target = rule.channel_target.as_deref().unwrap_or("<no webhook URL configured>");
+                let target = rule
+                    .channel_target
+                    .as_deref()
+                    .unwrap_or("<no webhook URL configured>");
                 println!(
                     "  {} [Webhook] Would POST test payload to {}",
                     "✓".green(),

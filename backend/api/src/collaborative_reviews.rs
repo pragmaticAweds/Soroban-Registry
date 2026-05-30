@@ -1,3 +1,4 @@
+use crate::validation::extractors::ValidatedJson;
 use crate::{
     auth::AuthenticatedUser,
     disaster_recovery_models::SendNotificationRequest,
@@ -5,7 +6,6 @@ use crate::{
     notification_handlers,
     state::AppState,
 };
-use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,

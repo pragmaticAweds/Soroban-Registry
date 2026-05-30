@@ -274,17 +274,27 @@ pub static CLIENT_BREAKER_OPEN: Lazy<IntGaugeVec> = gauge_vec!(
 );
 
 // ── Database Resilience Metrics ─────────────────────────────────────────────
-pub static DB_RESILIENCE_QUEUE_DEPTH: Lazy<IntGauge> =
-    gauge!("db_resilience_queue_depth", "Current requests waiting in the DB connection queue");
-pub static DB_RESILIENCE_ACTIVE_REQS: Lazy<IntGauge> =
-    gauge!("db_resilience_active_reqs", "Active requests holding a DB concurrency permit");
-pub static DB_RESILIENCE_BREAKER_STATE: Lazy<IntGauge> =
-    gauge!("db_resilience_breaker_state", "Database circuit breaker state (0=Closed, 1=Open, 2=HalfOpen)");
-pub static DB_RESILIENCE_BREAKER_TRIPS: Lazy<IntCounter> =
-    counter!("db_resilience_breaker_trips_total", "Total database circuit breaker trips");
-pub static DB_RESILIENCE_REJECTIONS: Lazy<IntCounterVec> =
-    counter_vec!("db_resilience_rejections_total", "Total requests rejected by database resilience", &["reason"]);
-
+pub static DB_RESILIENCE_QUEUE_DEPTH: Lazy<IntGauge> = gauge!(
+    "db_resilience_queue_depth",
+    "Current requests waiting in the DB connection queue"
+);
+pub static DB_RESILIENCE_ACTIVE_REQS: Lazy<IntGauge> = gauge!(
+    "db_resilience_active_reqs",
+    "Active requests holding a DB concurrency permit"
+);
+pub static DB_RESILIENCE_BREAKER_STATE: Lazy<IntGauge> = gauge!(
+    "db_resilience_breaker_state",
+    "Database circuit breaker state (0=Closed, 1=Open, 2=HalfOpen)"
+);
+pub static DB_RESILIENCE_BREAKER_TRIPS: Lazy<IntCounter> = counter!(
+    "db_resilience_breaker_trips_total",
+    "Total database circuit breaker trips"
+);
+pub static DB_RESILIENCE_REJECTIONS: Lazy<IntCounterVec> = counter_vec!(
+    "db_resilience_rejections_total",
+    "Total requests rejected by database resilience",
+    &["reason"]
+);
 
 // ── SLO ─────────────────────────────────────────────────────────────────────
 pub static SLO_ERROR_BUDGET: Lazy<GaugeVec> = gauge_f64_vec!(

@@ -224,7 +224,10 @@ impl OnChainVerifier {
                             .is_some();
 
                     if !abi_matches_deployed_contract {
-                        warnings.push("Stored ABI did not match inferred on-chain contract functions".to_string());
+                        warnings.push(
+                            "Stored ABI did not match inferred on-chain contract functions"
+                                .to_string(),
+                        );
                     }
 
                     abi_valid = abi_matches_deployed_contract;
@@ -379,7 +382,8 @@ impl OnChainVerifier {
                     e
                 ))
             })?;
-        let LedgerEntryData::ContractCode(ContractCodeEntry { code, .. }) = ledger_entry.data else {
+        let LedgerEntryData::ContractCode(ContractCodeEntry { code, .. }) = ledger_entry.data
+        else {
             return Err(RegistryError::StellarRpc(
                 "Unexpected ledger entry type for contract code".to_string(),
             ));

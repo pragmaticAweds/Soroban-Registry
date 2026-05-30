@@ -85,10 +85,7 @@ pub async fn record_usage(
         return Err(ApiError::bad_request_msg("call_count must be positive"));
     }
 
-    let metadata = body
-        .event
-        .metadata
-        .unwrap_or_else(|| serde_json::json!({}));
+    let metadata = body.event.metadata.unwrap_or_else(|| serde_json::json!({}));
 
     sqlx::query(
         r#"
@@ -170,14 +167,13 @@ async fn summarize(
     // Pull plan quota for the response (informational). The column is
     // nullable (NULL = unlimited), so the scalar type is Option<i64> and
     // fetch_optional yields Option<Option<i64>> — flatten to one layer.
-    let quota: Option<i64> =
-        sqlx::query_scalar::<_, Option<i64>>(
-            "SELECT call_quota FROM contract_pricing_plans WHERE id = $1",
-        )
-        .bind(license.plan_id)
-        .fetch_optional(&state.db)
-        .await?
-        .flatten();
+    let quota: Option<i64> = sqlx::query_scalar::<_, Option<i64>>(
+        "SELECT call_quota FROM contract_pricing_plans WHERE id = $1",
+    )
+    .bind(license.plan_id)
+    .fetch_optional(&state.db)
+    .await?
+    .flatten();
 
     let quota_exceeded = quota.map(|q| total_calls > q).unwrap_or(false);
 

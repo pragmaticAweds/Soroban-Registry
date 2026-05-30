@@ -64,9 +64,9 @@ pub mod enhanced_extractors;
 #[allow(dead_code)]
 pub mod extractors;
 #[allow(dead_code)]
-pub mod payload_size;
-#[allow(dead_code)]
 pub mod handler_requests;
+#[allow(dead_code)]
+pub mod payload_size;
 #[allow(dead_code)]
 pub mod requests;
 #[allow(dead_code)]
@@ -88,14 +88,12 @@ mod integration_guide;
 #[allow(unused_imports)]
 pub use enhanced_extractors::{validate_request, validate_response_schema_dev, ValidationRule};
 #[allow(unused_imports)]
-pub use handler_requests::{
-    BatchContractIdsRequest, RecordMetricsBatchRequest, ValidatedJsonBody,
-};
-#[allow(unused_imports)]
 pub use extractors::{
     FieldError, Validatable, ValidatedJson, ValidatedPath, ValidatedQuery, ValidationBuilder,
     ValidationError,
 };
+#[allow(unused_imports)]
+pub use handler_requests::{BatchContractIdsRequest, RecordMetricsBatchRequest, ValidatedJsonBody};
 #[allow(unused_imports)]
 pub use sanitizers::{
     normalize_contract_id, normalize_stellar_address, sanitize_description,

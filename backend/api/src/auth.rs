@@ -11,7 +11,7 @@ use rand::{distributions::Alphanumeric, Rng};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fmt;
-use stellar_strkey::{Strkey, ed25519::PublicKey as StellarPublicKey};
+use stellar_strkey::{ed25519::PublicKey as StellarPublicKey, Strkey};
 
 pub const MIN_JWT_SECRET_LEN: usize = 32;
 

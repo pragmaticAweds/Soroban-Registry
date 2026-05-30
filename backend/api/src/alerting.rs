@@ -1,8 +1,8 @@
+use chrono::{DateTime, Utc};
 use reqwest::Client;
+use serde::Serialize;
 use std::collections::HashMap;
 use tokio::sync::RwLock;
-use chrono::{DateTime, Utc};
-use serde::Serialize;
 use tracing::{error, info, warn};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
@@ -50,7 +50,9 @@ impl AlertManager {
         {
             let mut last_alerts = self.last_alerts.write().await;
             if let Some(last_time) = last_alerts.get(&dedup_key) {
-                if Utc::now().signed_duration_since(*last_time).num_seconds() < self.dedup_interval_secs as i64 {
+                if Utc::now().signed_duration_since(*last_time).num_seconds()
+                    < self.dedup_interval_secs as i64
+                {
                     // Suppress duplicate alert
                     return;
                 }
@@ -91,8 +93,11 @@ impl AlertManager {
             _ => "ℹ️",
         };
 
-        let text = format!("{} *[{:?} - {}]*\n{}", emoji, alert.severity, alert.source, alert.message);
-        
+        let text = format!(
+            "{} *[{:?} - {}]*\n{}",
+            emoji, alert.severity, alert.source, alert.message
+        );
+
         let payload = SlackPayload { text };
 
         match self.client.post(url).json(&payload).send().await {

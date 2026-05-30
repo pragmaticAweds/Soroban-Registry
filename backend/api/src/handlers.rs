@@ -13,6 +13,7 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use axum::http::StatusCode;
 use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
 use ed25519_dalek::{Signature, Verifier, VerifyingKey};
 use once_cell::sync::Lazy;
@@ -7013,11 +7014,53 @@ pub async fn delete_favorite_search(
         .map_err(|err| db_internal_error("delete favorite search", err))?;
 
     if result.rows_affected() == 0 {
-        return Err(ApiError::not_found(
-            "FavoriteNotFound",
+        return Err(ApiError::not_found(            "FavoriteNotFound",
             "Favorite search not found",
         ));
     }
 
     Ok(StatusCode::NO_CONTENT)
 }
+
+// Axum Handler to Export Logs using project native structs
+pub async fn handle_export_audit(
+    State(state): State<AppState>,
+) -> ApiResult<Json<Vec<crate::audit::AuditRow>>> {
+    let logs = sqlx::query_as::<_, crate::audit::AuditRow>(
+        r#"
+        SELECT id, actor_id, actor_email, operation, resource_type,
+               resource_id, metadata, status, error_message, chain_hash,
+               created_at
+        FROM audit_logs
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(&state.db)
+    .await
+    .map_err(|e| ApiError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "DatabaseError",
+        format!("Failed to export audit logs: {e}")
+    ))?;
+
+    Ok(Json(logs))
+}
+
+// Axum Handler to enforce retention criteria
+pub async fn handle_retention_cleanup(
+    State(state): State<AppState>,
+) -> ApiResult<String> {
+    let result = sqlx::query(
+        "DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '1 year'"
+    )
+    .execute(&state.db)
+    .await
+    .map_err(|e| ApiError::new(
+        StatusCode::INTERNAL_SERVER_ERROR,
+        "DatabaseError",
+        format!("Failed to prune logs: {e}")
+    ))?;
+    
+    Ok(format!("Pruned rows: {}", result.rows_affected()))
+}
+

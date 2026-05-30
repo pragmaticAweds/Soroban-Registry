@@ -149,7 +149,10 @@ async fn assert_contract_owner(
         Some(_) => Err(ApiError::forbidden(
             "only the contract owner can modify its pricing plans",
         )),
-        None => Err(ApiError::not_found("contract_not_found", "contract not found")),
+        None => Err(ApiError::not_found(
+            "contract_not_found",
+            "contract not found",
+        )),
     }
 }
 

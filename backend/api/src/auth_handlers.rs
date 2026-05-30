@@ -166,10 +166,10 @@ mod tests {
     use crate::search_postgres::PostgresSearchService;
     use axum::extract::Query;
     use ed25519_dalek::{Signer, SigningKey};
-    use stellar_strkey::ed25519::PublicKey as StellarPublicKey;
     use prometheus::Registry;
     use std::sync::{Arc, RwLock};
     use std::time::Instant;
+    use stellar_strkey::ed25519::PublicKey as StellarPublicKey;
 
     async fn test_app_state() -> AppState {
         let db = sqlx::pool::PoolOptions::new()
@@ -209,9 +209,7 @@ mod tests {
         let state = test_app_state().await;
         let key = SigningKey::from_bytes(&[1u8; 32]);
         let address = StellarPublicKey(*key.verifying_key().as_bytes()).to_string();
-        let query = ChallengeQuery {
-            address,
-        };
+        let query = ChallengeQuery { address };
         let result = get_challenge(State(state.clone()), Query(query)).await;
         assert!(result.is_ok());
         let Json(resp) = result.unwrap();

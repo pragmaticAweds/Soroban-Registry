@@ -104,11 +104,12 @@ pub async fn get_archival_status(
     .await
     .unwrap_or_default();
 
-    let total_archived: i64 =
-        sqlx::query_scalar("SELECT COALESCE(SUM(rows_archived), 0) FROM archival_runs WHERE status = 'completed'")
-            .fetch_one(&state.db)
-            .await
-            .unwrap_or(0);
+    let total_archived: i64 = sqlx::query_scalar(
+        "SELECT COALESCE(SUM(rows_archived), 0) FROM archival_runs WHERE status = 'completed'",
+    )
+    .fetch_one(&state.db)
+    .await
+    .unwrap_or(0);
 
     Ok(Json(ArchivalStatus {
         policies,
@@ -238,7 +239,9 @@ pub async fn restore_archived_record(
     .ok_or_else(|| ApiError::not_found("ARCHIVE_NOT_FOUND", "No archived record found for the given source_table/source_id"))?;
 
     use sqlx::Row as _;
-    let data: serde_json::Value = entry.try_get("archived_data").unwrap_or(serde_json::Value::Null);
+    let data: serde_json::Value = entry
+        .try_get("archived_data")
+        .unwrap_or(serde_json::Value::Null);
 
     if data.is_null() {
         return Err(ApiError::internal(
@@ -272,8 +275,7 @@ async fn execute_archival_policy(pool: &PgPool, policy: &ArchivalPolicy) -> Arch
     .await
     .unwrap_or(0);
 
-    let cutoff = Utc::now()
-        - chrono::Duration::days(policy.retention_days as i64);
+    let cutoff = Utc::now() - chrono::Duration::days(policy.retention_days as i64);
 
     let archived = archive_rows(pool, policy, cutoff, run_id).await;
 

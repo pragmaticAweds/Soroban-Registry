@@ -1,181 +1,3 @@
-//! cache.rs — Verification result caching with 24-hour TTL
-//!
-//! Manages local caching of contract verification results to reduce API calls
-//! and improve CLI performance. Cache entries are automatically invalidated
-//! after 24 hours or when explicitly cleared.
-
-use anyhow::{Context, Result};
-use chrono::{DateTime, Duration, Utc};
-use serde::{Deserialize, Serialize};
-use std::collections::BTreeMap;
-use std::fs;
-use std::path::PathBuf;
-
-const CACHE_DIR_NAME: &str = ".soroban-registry";
-const CACHE_FILE_NAME: &str = "verification_cache.json";
-const CACHE_TTL_HOURS: i64 = 24;
-
-/// A cached verification result with timestamp
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CachedVerification {
-    /// The cached verification result JSON
-    pub result: serde_json::Value,
-    /// Timestamp when the result was cached
-    pub cached_at: DateTime<Utc>,
-    /// Verification detail (security scan + audit info)
-    pub detail: Option<serde_json::Value>,
-}
-
-/// The entire verification cache
-#[derive(Debug, Serialize, Deserialize, Default)]
-struct VerificationCache {
-    #[serde(flatten)]
-    entries: BTreeMap<String, CachedVerification>,
-}
-
-impl VerificationCache {
-    /// Load the cache from disk, or return an empty cache if it doesn't exist
-    fn load() -> Result<Self> {
-        let path = cache_file_path()?;
-        if !path.exists() {
-            return Ok(VerificationCache::default());
-        }
-
-        let content = fs::read_to_string(&path)
-            .context("Failed to read verification cache file")?;
-        serde_json::from_str(&content)
-            .context("Failed to parse verification cache")
-    }
-
-    /// Save the cache to disk
-    fn save(&self) -> Result<()> {
-        let path = cache_file_path()?;
-        if let Some(parent) = path.parent() {
-            fs::create_dir_all(parent)
-                .context("Failed to create cache directory")?;
-        }
-        let content = serde_json::to_string_pretty(self)?;
-        fs::write(&path, content)
-            .context("Failed to write verification cache")?;
-        Ok(())
-    }
-
-    /// Remove expired entries (older than 24 hours)
-    fn prune_expired(&mut self) {
-        let now = Utc::now();
-        let ttl = Duration::hours(CACHE_TTL_HOURS);
-        self.entries.retain(|_, cached| {
-            let age = now.signed_duration_since(cached.cached_at);
-            age < ttl
-        });
-    }
-}
-
-/// Generate a cache key from contract address and network
-fn cache_key(address: &str, network: &str) -> String {
-    format!("{}:{}", network, address)
-}
-
-/// Get the path to the cache file
-fn cache_file_path() -> Result<PathBuf> {
-    dirs::home_dir()
-        .map(|home| home.join(CACHE_DIR_NAME).join(CACHE_FILE_NAME))
-        .ok_or_else(|| anyhow::anyhow!("Could not resolve home directory"))
-}
-
-/// Retrieve a cached verification result if it exists and is still valid
-pub fn get(address: &str, network: &str) -> Result<Option<CachedVerification>> {
-    let mut cache = VerificationCache::load()?;
-    cache.prune_expired();
-
-    let key = cache_key(address, network);
-    Ok(cache.entries.get(&key).cloned())
-}
-
-/// Store a verification result in the cache
-pub fn set(
-    address: &str,
-    network: &str,
-    result: serde_json::Value,
-    detail: Option<serde_json::Value>,
-) -> Result<()> {
-    let mut cache = VerificationCache::load()?;
-    cache.prune_expired();
-
-    let key = cache_key(address, network);
-    cache.entries.insert(
-        key,
-        CachedVerification {
-            result,
-            cached_at: Utc::now(),
-            detail,
-        },
-    );
-
-    cache.save()
-}
-
-/// Clear all cached verification results
-pub fn clear_all() -> Result<()> {
-    let path = cache_file_path()?;
-    if path.exists() {
-        fs::remove_file(&path).context("Failed to remove cache file")?;
-    }
-    Ok(())
-}
-
-/// Clear a specific contract's cached verification
-pub fn clear(address: &str, network: &str) -> Result<()> {
-    let mut cache = VerificationCache::load()?;
-
-    let key = cache_key(address, network);
-    cache.entries.remove(&key);
-
-    cache.save()
-}
-
-/// Get cache statistics (number of entries, oldest entry, newest entry)
-pub fn stats() -> Result<CacheStats> {
-    let mut cache = VerificationCache::load()?;
-    cache.prune_expired();
-
-    let count = cache.entries.len();
-    let oldest = cache.entries.values().map(|c| c.cached_at).min();
-    let newest = cache.entries.values().map(|c| c.cached_at).max();
-
-    Ok(CacheStats {
-        total_entries: count,
-        oldest_entry: oldest,
-        newest_entry: newest,
-        ttl_hours: CACHE_TTL_HOURS,
-    })
-}
-
-#[derive(Debug)]
-pub struct CacheStats {
-    pub total_entries: usize,
-    pub oldest_entry: Option<DateTime<Utc>>,
-    pub newest_entry: Option<DateTime<Utc>>,
-    pub ttl_hours: i64,
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_cache_key_generation() {
-        let key = cache_key("abc123", "testnet");
-        assert_eq!(key, "testnet:abc123");
-    }
-
-    #[test]
-    fn test_empty_cache() {
-        // This test verifies that an empty cache loads correctly
-        let cache = VerificationCache::default();
-        assert_eq!(cache.entries.len(), 0);
-    }
-}
 //! cache.rs — `soroban-registry cache` (#845)
 //!
 //! Manages the CLI's local disk cache of registry API responses.
@@ -216,7 +38,7 @@ pub struct CacheConfig {
 impl Default for CacheConfig {
     fn default() -> Self {
         Self {
-            ttl_seconds: 300,        // 5 minutes
+            ttl_seconds: 300,           // 5 minutes
             max_disk_bytes: 52_428_800, // 50 MiB
             compression: false,
             auto_refresh: true,
@@ -360,7 +182,10 @@ pub fn clear(level: &str, key: Option<&str>) -> Result<()> {
 
     if !dir.exists() {
         println!();
-        println!("  {} Cache directory does not exist — nothing to clear.", "·".dimmed());
+        println!(
+            "  {} Cache directory does not exist — nothing to clear.",
+            "·".dimmed()
+        );
         println!();
         return Ok(());
     }
@@ -369,7 +194,11 @@ pub fn clear(level: &str, key: Option<&str>) -> Result<()> {
         // Clear a single entry.
         if delete_entry_file(&dir, k) {
             println!();
-            println!("  {} Entry '{}' removed from disk cache.", "✔".green().bold(), k.bold());
+            println!(
+                "  {} Entry '{}' removed from disk cache.",
+                "✔".green().bold(),
+                k.bold()
+            );
             println!();
         } else {
             println!();
@@ -428,7 +257,11 @@ pub fn status(json: bool) -> Result<()> {
     let dir = cache_dir()?;
     let cfg = load_config()?;
 
-    let entries = if dir.exists() { load_entries(&dir) } else { vec![] };
+    let entries = if dir.exists() {
+        load_entries(&dir)
+    } else {
+        vec![]
+    };
 
     let total_entries = entries.len();
     let stale_entries = entries.iter().filter(|e| e.is_stale()).count();
@@ -511,19 +344,11 @@ pub fn status(json: bool) -> Result<()> {
             pct
         );
     }
-    println!(
-        "  {:<28} {:.1}%",
-        "Hit rate (approx):".bold(),
-        hit_rate
-    );
+    println!("  {:<28} {:.1}%", "Hit rate (approx):".bold(), hit_rate);
     println!();
 
     println!("  {}", "Configuration".bold().underline());
-    println!(
-        "  {:<28} {}s",
-        "TTL:".bold(),
-        cfg.ttl_seconds
-    );
+    println!("  {:<28} {}s", "TTL:".bold(), cfg.ttl_seconds);
     println!(
         "  {:<28} {}",
         "Max disk:".bold(),
@@ -536,12 +361,20 @@ pub fn status(json: bool) -> Result<()> {
     println!(
         "  {:<28} {}",
         "Compression:".bold(),
-        if cfg.compression { "enabled".green().to_string() } else { "disabled".dimmed().to_string() }
+        if cfg.compression {
+            "enabled".green().to_string()
+        } else {
+            "disabled".dimmed().to_string()
+        }
     );
     println!(
         "  {:<28} {}",
         "Auto-refresh stale:".bold(),
-        if cfg.auto_refresh { "enabled".green().to_string() } else { "disabled".dimmed().to_string() }
+        if cfg.auto_refresh {
+            "enabled".green().to_string()
+        } else {
+            "disabled".dimmed().to_string()
+        }
     );
     println!();
 
@@ -625,14 +458,20 @@ pub fn optimize(json: bool) -> Result<()> {
 
     if !dir.exists() {
         if json {
-            println!("{}", serde_json::to_string_pretty(&serde_json::json!({
-                "removed_stale": 0,
-                "removed_oversized": 0,
-                "bytes_freed": 0
-            }))?);
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&serde_json::json!({
+                    "removed_stale": 0,
+                    "removed_oversized": 0,
+                    "bytes_freed": 0
+                }))?
+            );
         } else {
             println!();
-            println!("  {} Cache directory is empty — nothing to optimize.", "·".dimmed());
+            println!(
+                "  {} Cache directory is empty — nothing to optimize.",
+                "·".dimmed()
+            );
             println!();
         }
         return Ok(());
@@ -729,7 +568,11 @@ pub fn optimize(json: bool) -> Result<()> {
 pub fn export(format: &str, include_stale: bool) -> Result<()> {
     let dir = cache_dir()?;
 
-    let mut entries = if dir.exists() { load_entries(&dir) } else { vec![] };
+    let mut entries = if dir.exists() {
+        load_entries(&dir)
+    } else {
+        vec![]
+    };
 
     if !include_stale {
         entries.retain(|e| !e.is_stale());
@@ -748,7 +591,9 @@ pub fn export(format: &str, include_stale: bool) -> Result<()> {
                     e.compressed,
                     e.hits,
                     e.is_stale(),
-                    e.expires_in().map(|s| s.to_string()).unwrap_or_else(|| "expired".to_string()),
+                    e.expires_in()
+                        .map(|s| s.to_string())
+                        .unwrap_or_else(|| "expired".to_string()),
                 );
             }
         }
@@ -811,11 +656,7 @@ fn print_config(cfg: &CacheConfig) {
     println!();
     println!("{}", "Cache Configuration".bold().cyan());
     println!("{}", "═".repeat(50).cyan());
-    println!(
-        "  {:<28} {}s",
-        "TTL:".bold(),
-        cfg.ttl_seconds
-    );
+    println!("  {:<28} {}s", "TTL:".bold(), cfg.ttl_seconds);
     println!(
         "  {:<28} {}",
         "Max disk size:".bold(),
@@ -828,12 +669,20 @@ fn print_config(cfg: &CacheConfig) {
     println!(
         "  {:<28} {}",
         "Compression:".bold(),
-        if cfg.compression { "on".green().to_string() } else { "off".dimmed().to_string() }
+        if cfg.compression {
+            "on".green().to_string()
+        } else {
+            "off".dimmed().to_string()
+        }
     );
     println!(
         "  {:<28} {}",
         "Auto-refresh stale:".bold(),
-        if cfg.auto_refresh { "on".green().to_string() } else { "off".dimmed().to_string() }
+        if cfg.auto_refresh {
+            "on".green().to_string()
+        } else {
+            "off".dimmed().to_string()
+        }
     );
     println!("{}", "═".repeat(50).cyan());
     println!();

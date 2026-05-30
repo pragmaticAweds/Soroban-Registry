@@ -56,6 +56,8 @@ async fn verify_batch_item(
     onchain_verifier: &OnChainVerifier,
     item: BatchVerifyItem,
 ) -> Value {
+    let level = item.level.as_deref().unwrap_or("standard");
+
     let contract = match sqlx::query_as::<_, Contract>(
         "SELECT * FROM contracts WHERE contract_id = $1 ORDER BY created_at DESC LIMIT 1",
     )
@@ -80,6 +82,45 @@ async fn verify_batch_item(
         }
     };
 
+    // basic: on-chain existence + wasm hash only — skip ABI and source
+    if level == "basic" {
+        let on_chain = match onchain_verifier
+            .verify_contract(&state.cache, &contract, None)
+            .await
+        {
+            Ok(result) => result,
+            Err(err) => {
+                return json!({
+                    "contract_id": contract.contract_id,
+                    "verified": false,
+                    "error": err.to_string()
+                });
+            }
+        };
+        let verified = on_chain.contract_exists_on_chain && on_chain.wasm_hash_matches;
+        return json!({
+            "contract_id": contract.contract_id,
+            "verified": verified,
+            "level": "basic",
+            "on_chain": on_chain
+        });
+    }
+
+    // strict: source_code and compiler_version are mandatory
+    if level == "strict" {
+        match (&item.source_code, &item.compiler_version) {
+            (Some(sc), Some(cv)) if !sc.trim().is_empty() && !cv.trim().is_empty() => {}
+            _ => {
+                return json!({
+                    "contract_id": contract.contract_id,
+                    "verified": false,
+                    "error": "strict verification requires source_code and compiler_version"
+                });
+            }
+        }
+    }
+
+    // standard / strict: full on-chain + optional source verification
     let abi_json = sqlx::query_scalar::<_, serde_json::Value>(
         "SELECT abi FROM contract_abis WHERE contract_id = $1 ORDER BY created_at DESC LIMIT 1",
     )
@@ -128,6 +169,7 @@ async fn verify_batch_item(
     json!({
         "contract_id": contract.contract_id,
         "verified": verified,
+        "level": level,
         "network": contract.network.to_string(),
         "on_chain": on_chain,
         "source_verification": source_verification.map(|result| match result {

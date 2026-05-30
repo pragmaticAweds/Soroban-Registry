@@ -31,7 +31,9 @@ pub async fn issue_license(
     Json(req): Json<IssueLicenseRequest>,
 ) -> ApiResult<(StatusCode, Json<IssuedLicense>)> {
     let signer = marketplace::load_signer()?;
-    let metadata = req.metadata.unwrap_or_else(|| serde_json::json!({"source":"self_serve"}));
+    let metadata = req
+        .metadata
+        .unwrap_or_else(|| serde_json::json!({"source":"self_serve"}));
     let issued = issuance::issue_for_owner(
         &state.db,
         &signer,

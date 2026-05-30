@@ -781,10 +781,14 @@ impl Validatable for SaveFavoriteSearchRequest {
 
     fn validate(&self) -> Result<(), Vec<FieldError>> {
         let mut builder = ValidationBuilder::new();
-        builder.check("user_address", || validate_stellar_address(&self.user_address));
+        builder.check("user_address", || {
+            validate_stellar_address(&self.user_address)
+        });
         builder.check("name", || validate_length(&self.name, 1, 100));
         builder.check("name", || validate_no_xss(&self.name));
-        builder.check("query_json", || validate_json_depth(&self.query_json, MAX_JSON_DEPTH));
+        builder.check("query_json", || {
+            validate_json_depth(&self.query_json, MAX_JSON_DEPTH)
+        });
         builder.build()
     }
 }

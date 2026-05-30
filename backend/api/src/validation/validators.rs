@@ -321,8 +321,7 @@ pub fn validate_slug(slug: &str) -> Result<(), String> {
 /// Validate a basic email format.
 pub fn validate_email(email: &str) -> Result<(), String> {
     lazy_static! {
-        static ref EMAIL_REGEX: Regex =
-            Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap();
+        static ref EMAIL_REGEX: Regex = Regex::new(r"^[^\s@]+@[^\s@]+\.[^\s@]+$").unwrap();
     }
     let trimmed = email.trim();
     if trimmed.is_empty() {
@@ -361,7 +360,8 @@ pub fn validate_rating(value: f64, min: f64, max: f64) -> Result<(), String> {
 
 /// Validate a percentage value (0.0–100.0).
 pub fn validate_percentage(value: f64) -> Result<(), String> {
-    validate_rating(value, 0.0, 100.0).map_err(|_| "percentage must be between 0 and 100".to_string())
+    validate_rating(value, 0.0, 100.0)
+        .map_err(|_| "percentage must be between 0 and 100".to_string())
 }
 
 /// Validate hex string of exact length.

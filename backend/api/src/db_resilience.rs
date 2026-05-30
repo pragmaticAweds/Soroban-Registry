@@ -90,7 +90,10 @@ impl CircuitBreaker {
 
     /// Returns the current breaker state without acquiring a write lock.
     pub fn state(&self) -> BreakerState {
-        *self.state.read().expect("circuit breaker state RwLock poisoned")
+        *self
+            .state
+            .read()
+            .expect("circuit breaker state RwLock poisoned")
     }
 
     /// `true` when the breaker is `Open` and requests should be fast-failed.
@@ -101,19 +104,27 @@ impl CircuitBreaker {
     /// Called after a successful ping — resets failure count and closes the circuit.
     pub fn record_success(&self) {
         self.consecutive_failures.store(0, Ordering::SeqCst);
-        let mut state = self.state.write().expect("circuit breaker state RwLock poisoned");
+        let mut state = self
+            .state
+            .write()
+            .expect("circuit breaker state RwLock poisoned");
         if *state != BreakerState::Closed {
             tracing::info!("Database circuit breaker → CLOSED (healthy)");
             *state = BreakerState::Closed;
-            *self.last_state_change.write().expect("last_state_change RwLock poisoned") =
-                Instant::now();
+            *self
+                .last_state_change
+                .write()
+                .expect("last_state_change RwLock poisoned") = Instant::now();
         }
     }
 
     /// Called after a failed or timed-out ping.
     pub fn record_failure(&self) {
         let failures = self.consecutive_failures.fetch_add(1, Ordering::SeqCst) + 1;
-        let mut state = self.state.write().expect("circuit breaker state RwLock poisoned");
+        let mut state = self
+            .state
+            .write()
+            .expect("circuit breaker state RwLock poisoned");
         match *state {
             BreakerState::Closed if failures >= self.failure_threshold => {
                 tracing::error!(
@@ -121,15 +132,19 @@ impl CircuitBreaker {
                     "Database circuit breaker → OPEN (unhealthy)"
                 );
                 *state = BreakerState::Open;
-                *self.last_state_change.write().expect("last_state_change RwLock poisoned") =
-                    Instant::now();
+                *self
+                    .last_state_change
+                    .write()
+                    .expect("last_state_change RwLock poisoned") = Instant::now();
                 crate::metrics::DB_RESILIENCE_BREAKER_TRIPS.inc();
             }
             BreakerState::HalfOpen => {
                 tracing::error!("Database circuit breaker probe failed → OPEN");
                 *state = BreakerState::Open;
-                *self.last_state_change.write().expect("last_state_change RwLock poisoned") =
-                    Instant::now();
+                *self
+                    .last_state_change
+                    .write()
+                    .expect("last_state_change RwLock poisoned") = Instant::now();
                 crate::metrics::DB_RESILIENCE_BREAKER_TRIPS.inc();
             }
             _ => {}
@@ -139,7 +154,10 @@ impl CircuitBreaker {
     /// Called once per background-ping cycle to check whether the recovery
     /// timeout has elapsed and the breaker should move to `HalfOpen`.
     pub fn check_recovery(&self) {
-        let mut state = self.state.write().expect("circuit breaker state RwLock poisoned");
+        let mut state = self
+            .state
+            .write()
+            .expect("circuit breaker state RwLock poisoned");
         if *state == BreakerState::Open {
             let elapsed = self
                 .last_state_change
@@ -153,8 +171,10 @@ impl CircuitBreaker {
                 );
                 *state = BreakerState::HalfOpen;
                 self.consecutive_failures.store(0, Ordering::SeqCst);
-                *self.last_state_change.write().expect("last_state_change RwLock poisoned") =
-                    Instant::now();
+                *self
+                    .last_state_change
+                    .write()
+                    .expect("last_state_change RwLock poisoned") = Instant::now();
             }
         }
     }
@@ -218,8 +238,7 @@ impl DbQueue {
         crate::metrics::DB_RESILIENCE_QUEUE_DEPTH.set(self.queued_count() as i64);
 
         let sem_clone = self.semaphore.clone();
-        let result =
-            tokio::time::timeout(self.queue_timeout, sem_clone.acquire_owned()).await;
+        let result = tokio::time::timeout(self.queue_timeout, sem_clone.acquire_owned()).await;
 
         self.queued_requests.fetch_sub(1, Ordering::SeqCst);
         crate::metrics::DB_RESILIENCE_QUEUE_DEPTH.set(self.queued_count() as i64);
@@ -228,7 +247,10 @@ impl DbQueue {
             Ok(Ok(permit)) => {
                 self.active_requests.fetch_add(1, Ordering::SeqCst);
                 crate::metrics::DB_RESILIENCE_ACTIVE_REQS.set(self.active_count() as i64);
-                Ok(DbQueuePermit { _permit: permit, queue: self.clone() })
+                Ok(DbQueuePermit {
+                    _permit: permit,
+                    queue: self.clone(),
+                })
             }
             Ok(Err(_closed)) => {
                 crate::metrics::DB_RESILIENCE_REJECTIONS
@@ -301,8 +323,7 @@ pub fn spawn_background_ping_task(
             breaker.check_recovery();
 
             let current = breaker.state();
-            crate::metrics::DB_RESILIENCE_BREAKER_STATE
-                .set(current.to_gauge_value());
+            crate::metrics::DB_RESILIENCE_BREAKER_STATE.set(current.to_gauge_value());
 
             match current {
                 BreakerState::Open => {
@@ -365,10 +386,9 @@ pub async fn db_resilience_middleware(
             "Database is temporarily unavailable. Please retry shortly.",
         )
         .into_response();
-        response.headers_mut().insert(
-            RETRY_AFTER,
-            axum::http::HeaderValue::from_static("10"),
-        );
+        response
+            .headers_mut()
+            .insert(RETRY_AFTER, axum::http::HeaderValue::from_static("10"));
         return Ok(response);
     }
 
@@ -386,10 +406,9 @@ pub async fn db_resilience_middleware(
                 "Server is under extremely high load. Please try again later.",
             )
             .into_response();
-            response.headers_mut().insert(
-                RETRY_AFTER,
-                axum::http::HeaderValue::from_static("5"),
-            );
+            response
+                .headers_mut()
+                .insert(RETRY_AFTER, axum::http::HeaderValue::from_static("5"));
             Ok(response)
         }
         Err(DbQueueError::Timeout) => {
@@ -399,10 +418,9 @@ pub async fn db_resilience_middleware(
                 "Server is busy. Please try again in a moment.",
             )
             .into_response();
-            response.headers_mut().insert(
-                RETRY_AFTER,
-                axum::http::HeaderValue::from_static("2"),
-            );
+            response
+                .headers_mut()
+                .insert(RETRY_AFTER, axum::http::HeaderValue::from_static("2"));
             Ok(response)
         }
         Err(DbQueueError::SemaphoreClosed) => Ok(ApiError::new(

@@ -145,10 +145,7 @@ pub async fn snapshot_at(
     };
 
     // Filter out keys whose most-recent value is NULL (deletions).
-    let live: Vec<StateValue> = entries
-        .into_iter()
-        .filter(|e| e.value.is_some())
-        .collect();
+    let live: Vec<StateValue> = entries.into_iter().filter(|e| e.value.is_some()).collect();
     let total = live.len();
 
     Ok(StateSnapshot {
@@ -172,10 +169,16 @@ pub async fn diff(
     let to_snap = snapshot_at(db, contract_id, to).await?;
 
     use std::collections::HashMap;
-    let from_map: HashMap<&str, &StateValue> =
-        from_snap.entries.iter().map(|e| (e.state_key.as_str(), e)).collect();
-    let to_map: HashMap<&str, &StateValue> =
-        to_snap.entries.iter().map(|e| (e.state_key.as_str(), e)).collect();
+    let from_map: HashMap<&str, &StateValue> = from_snap
+        .entries
+        .iter()
+        .map(|e| (e.state_key.as_str(), e))
+        .collect();
+    let to_map: HashMap<&str, &StateValue> = to_snap
+        .entries
+        .iter()
+        .map(|e| (e.state_key.as_str(), e))
+        .collect();
 
     let mut added = Vec::new();
     let mut removed = Vec::new();
@@ -243,35 +246,56 @@ mod tests {
         }
     }
 
-    fn diff_pure(from: Vec<StateValue>, to: Vec<StateValue>) -> (Vec<String>, Vec<String>, Vec<String>) {
+    fn diff_pure(
+        from: Vec<StateValue>,
+        to: Vec<StateValue>,
+    ) -> (Vec<String>, Vec<String>, Vec<String>) {
         use std::collections::HashMap;
-        let fm: HashMap<&str, &StateValue> = from.iter().map(|e| (e.state_key.as_str(), e)).collect();
+        let fm: HashMap<&str, &StateValue> =
+            from.iter().map(|e| (e.state_key.as_str(), e)).collect();
         let tm: HashMap<&str, &StateValue> = to.iter().map(|e| (e.state_key.as_str(), e)).collect();
 
-        let mut added: Vec<String> = tm.iter()
+        let mut added: Vec<String> = tm
+            .iter()
             .filter(|(k, _)| !fm.contains_key(*k))
             .map(|(k, _)| (*k).to_string())
             .collect();
-        let mut removed: Vec<String> = fm.iter()
+        let mut removed: Vec<String> = fm
+            .iter()
             .filter(|(k, _)| !tm.contains_key(*k))
             .map(|(k, _)| (*k).to_string())
             .collect();
-        let mut changed: Vec<String> = tm.iter()
+        let mut changed: Vec<String> = tm
+            .iter()
             .filter_map(|(k, tv)| {
                 fm.get(k).and_then(|fv| {
-                    if fv.value != tv.value { Some((*k).to_string()) } else { None }
+                    if fv.value != tv.value {
+                        Some((*k).to_string())
+                    } else {
+                        None
+                    }
                 })
             })
             .collect();
-        added.sort(); removed.sort(); changed.sort();
+        added.sort();
+        removed.sort();
+        changed.sort();
         (added, removed, changed)
     }
 
     #[test]
     fn diff_added_removed_changed() {
         let (a, r, c) = diff_pure(
-            vec![sv("a", Some("1")), sv("b", Some("x")), sv("c", Some("keep"))],
-            vec![sv("a", Some("2")), sv("c", Some("keep")), sv("d", Some("new"))],
+            vec![
+                sv("a", Some("1")),
+                sv("b", Some("x")),
+                sv("c", Some("keep")),
+            ],
+            vec![
+                sv("a", Some("2")),
+                sv("c", Some("keep")),
+                sv("d", Some("new")),
+            ],
         );
         assert_eq!(a, vec!["d"]);
         assert_eq!(r, vec!["b"]);
@@ -280,10 +304,7 @@ mod tests {
 
     #[test]
     fn diff_empty_when_identical() {
-        let (a, r, c) = diff_pure(
-            vec![sv("a", Some("1"))],
-            vec![sv("a", Some("1"))],
-        );
+        let (a, r, c) = diff_pure(vec![sv("a", Some("1"))], vec![sv("a", Some("1"))]);
         assert!(a.is_empty() && r.is_empty() && c.is_empty());
     }
 
@@ -295,7 +316,7 @@ mod tests {
         // two snapshots. This test documents that contract.
         let (a, r, c) = diff_pure(
             vec![sv("a", Some("1"))],
-            vec![],  // deletion filtered out upstream
+            vec![], // deletion filtered out upstream
         );
         assert!(a.is_empty() && c.is_empty());
         assert_eq!(r, vec!["a"]);

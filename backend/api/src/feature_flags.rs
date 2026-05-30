@@ -2,8 +2,8 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use uuid::Uuid;
 use tracing::info;
+use uuid::Uuid;
 
 #[derive(Debug, Clone)]
 pub struct FeatureFlag {
@@ -117,8 +117,8 @@ impl FeatureFlagManager {
     }
 
     fn hash_uuid(&self, uid: Uuid) -> u64 {
-        use std::hash::{Hash, Hasher};
         use std::collections::hash_map::DefaultHasher;
+        use std::hash::{Hash, Hasher};
         let mut hasher = DefaultHasher::new();
         uid.hash(&mut hasher);
         hasher.finish()

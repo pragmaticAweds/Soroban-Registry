@@ -2,13 +2,13 @@ use crate::ai::service::AIService;
 use crate::auth::AuthManager;
 use crate::cache::{CacheConfig, CacheLayer};
 use crate::contract_events::ContractEventHub;
+use crate::feature_flags::FeatureFlagManager;
 use crate::health_monitor::HealthMonitorStatus;
 use crate::rate_limit::RateLimitState;
 use crate::resource_tracking::ResourceManager;
 use crate::search_client::SearchClient;
 use crate::search_postgres::PostgresSearchService;
 use crate::state_monitor::StateMonitorService;
-use crate::feature_flags::FeatureFlagManager;
 use shared::source_storage::SourceStorage;
 
 use prometheus::Registry;

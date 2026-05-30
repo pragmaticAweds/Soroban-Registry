@@ -118,6 +118,31 @@ impl AuditLogger {
 
         Ok(id)
     }
+    /// Export all audit logs for reporting compliance (Compile-Safe Runtime Query)
+    pub async fn export_all_logs(&self) -> Result<Vec<AuditRow>, sqlx::Error> {
+        sqlx::query_as::<_, AuditRow>(
+            r#"
+            SELECT id, actor_id, actor_email, operation, resource_type,
+                   resource_id, metadata, status, error_message, chain_hash,
+                   created_at
+            FROM audit_logs
+            ORDER BY created_at DESC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Enforce the 1-year compliance retention policy (Compile-Safe Runtime Query)
+    pub async fn enforce_retention_policy(&self) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query(
+            "DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '1 year'"
+        )
+        .execute(&self.pool)
+        .await?;
+        
+        Ok(result.rows_affected())
+    }
 
     /// Query audit logs for a specific resource.
     pub async fn query_by_resource(
@@ -193,6 +218,31 @@ pub mod ops {
     pub const USER_ROLE_CHANGE: &str = "user.role_change";
     pub const ADMIN_ACTION: &str = "admin.action";
 }
+    /// Export all audit logs for reporting compliance.
+    pub async fn export_all_logs(&self) -> Result<Vec<AuditRow>, sqlx::Error> {
+        sqlx::query_as::<_, AuditRow>(
+            r#"
+            SELECT id, actor_id, actor_email, operation, resource_type,
+                   resource_id, metadata, status, error_message, chain_hash,
+                   created_at
+            FROM audit_logs
+            ORDER BY created_at DESC
+            "#,
+        )
+        .fetch_all(&self.pool)
+        .await
+    }
+
+    /// Enforce the 1-year compliance retention policy.
+    pub async fn enforce_retention_policy(&self) -> Result<u64, sqlx::Error> {
+        let result = sqlx::query!(
+            "DELETE FROM audit_logs WHERE created_at < NOW() - INTERVAL '1 year'"
+        )
+        .execute(&self.pool)
+        .await?;
+        
+        Ok(result.rows_affected())
+    }
 
 #[cfg(test)]
 mod tests {

@@ -756,18 +756,49 @@ pub enum Commands {
         action: ContractCommands,
     },
 
-    /// Verify multiple contracts in a single atomic batch (all succeed or all rollback)
+    /// Verify multiple contracts in a bulk batch (#850)
     BatchVerify {
-        /// Comma-separated list of contract IDs to verify.
-        /// Optionally suffix with @version (e.g. abc123@1.0.0,def456)
+        /// Path to a contract list file (.txt one-ID-per-line, .json, or .yaml)
         #[arg(long)]
-        contracts: String,
+        file: Option<String>,
 
-        /// Stellar address or username initiating the batch (recorded in audit log)
+        /// Comma-separated IDs — fallback when --file is absent
+        #[arg(long)]
+        contracts: Option<String>,
+
+        /// Filter by network when discovering from API (mainnet|testnet|futurenet)
+        #[arg(long)]
+        network: Option<String>,
+
+        /// Filter by category when discovering from API (e.g. defi, nft)
+        #[arg(long)]
+        category: Option<String>,
+
+        /// Only include contracts created within this many days
+        #[arg(long)]
+        age: Option<u32>,
+
+        /// Stellar address or username initiating the batch
         #[arg(long)]
         initiated_by: String,
 
-        /// Output results as machine-readable JSON
+        /// Verification depth: basic | standard | strict
+        #[arg(long, default_value = "standard")]
+        level: String,
+
+        /// Export report to file; format inferred from extension (.json or .csv)
+        #[arg(long)]
+        export: Option<String>,
+
+        /// Save human-readable report to a text file
+        #[arg(long)]
+        output: Option<String>,
+
+        /// Save cron schedule and print crontab entry
+        #[arg(long)]
+        schedule: Option<String>,
+
+        /// Output machine-readable JSON
         #[arg(long)]
         json: bool,
     },
@@ -2746,16 +2777,38 @@ pub async fn dispatch_command(
             }
         },
         Commands::BatchVerify {
+            file,
             contracts,
+            network,
+            category,
+            age,
             initiated_by,
+            level,
+            export,
+            output,
+            schedule,
             json,
         } => {
             log::debug!(
-                "Command: batch-verify | contracts={} initiated_by={}",
+                "Command: batch-verify | contracts={:?} initiated_by={}",
                 contracts,
                 initiated_by
             );
-            batch_verify::run_batch_verify(&cli.api_url, &contracts, &initiated_by, json).await?;
+            batch_verify::run_batch_verify(batch_verify::BatchVerifyArgs {
+                api_url: &cli.api_url,
+                file: file.as_deref(),
+                contracts: contracts.as_deref(),
+                network: network.as_deref(),
+                category: category.as_deref(),
+                age,
+                initiated_by: &initiated_by,
+                level: &level,
+                export: export.as_deref(),
+                output: output.as_deref(),
+                schedule: schedule.as_deref(),
+                json,
+            })
+            .await?;
         }
         Commands::Webhook { action } => match action {
             WebhookCommands::Create {
@@ -3864,18 +3917,49 @@ pub enum Commands {
         action: ApiKeyCommands,
     },
 
-    /// Verify multiple contracts in a single atomic batch (all succeed or all rollback)
+    /// Verify multiple contracts in a bulk batch (#850)
     BatchVerify {
-        /// Comma-separated list of contract IDs to verify.
-        /// Optionally suffix with @version (e.g. abc123@1.0.0,def456)
+        /// Path to a contract list file (.txt one-ID-per-line, .json, or .yaml)
         #[arg(long)]
-        contracts: String,
+        file: Option<String>,
 
-        /// Stellar address or username initiating the batch (recorded in audit log)
+        /// Comma-separated IDs — fallback when --file is absent
+        #[arg(long)]
+        contracts: Option<String>,
+
+        /// Filter by network when discovering from API (mainnet|testnet|futurenet)
+        #[arg(long)]
+        network: Option<String>,
+
+        /// Filter by category when discovering from API (e.g. defi, nft)
+        #[arg(long)]
+        category: Option<String>,
+
+        /// Only include contracts created within this many days
+        #[arg(long)]
+        age: Option<u32>,
+
+        /// Stellar address or username initiating the batch
         #[arg(long)]
         initiated_by: String,
 
-        /// Output results as machine-readable JSON
+        /// Verification depth: basic | standard | strict
+        #[arg(long, default_value = "standard")]
+        level: String,
+
+        /// Export report to file; format inferred from extension (.json or .csv)
+        #[arg(long)]
+        export: Option<String>,
+
+        /// Save human-readable report to a text file
+        #[arg(long)]
+        output: Option<String>,
+
+        /// Save cron schedule and print crontab entry
+        #[arg(long)]
+        schedule: Option<String>,
+
+        /// Output machine-readable JSON
         #[arg(long)]
         json: bool,
     },
@@ -6645,16 +6729,38 @@ pub async fn dispatch_command(
             }
         },
         Commands::BatchVerify {
+            file,
             contracts,
+            network,
+            category,
+            age,
             initiated_by,
+            level,
+            export,
+            output,
+            schedule,
             json,
         } => {
             log::debug!(
-                "Command: batch-verify | contracts={} initiated_by={}",
+                "Command: batch-verify | contracts={:?} initiated_by={}",
                 contracts,
                 initiated_by
             );
-            batch_verify::run_batch_verify(&cli.api_url, &contracts, &initiated_by, json).await?;
+            batch_verify::run_batch_verify(batch_verify::BatchVerifyArgs {
+                api_url: &cli.api_url,
+                file: file.as_deref(),
+                contracts: contracts.as_deref(),
+                network: network.as_deref(),
+                category: category.as_deref(),
+                age,
+                initiated_by: &initiated_by,
+                level: &level,
+                export: export.as_deref(),
+                output: output.as_deref(),
+                schedule: schedule.as_deref(),
+                json,
+            })
+            .await?;
         }
         Commands::Webhook { action } => match action {
             WebhookCommands::Create {
@@ -7209,6 +7315,8 @@ pub async fn dispatch_command(
                     include_stale
                 );
                 cache::export(&format, include_stale)?;
+            }
+        },
         // ── Environment variable management (#843) ───────────────────────────
         Commands::Env { action } => match action {
             EnvCommands::Set {
@@ -8161,18 +8269,49 @@ pub enum Commands {
         action: ApiKeyCommands,
     },
 
-    /// Verify multiple contracts in a single atomic batch (all succeed or all rollback)
+    /// Verify multiple contracts in a bulk batch (#850)
     BatchVerify {
-        /// Comma-separated list of contract IDs to verify.
-        /// Optionally suffix with @version (e.g. abc123@1.0.0,def456)
+        /// Path to a contract list file (.txt one-ID-per-line, .json, or .yaml)
         #[arg(long)]
-        contracts: String,
+        file: Option<String>,
 
-        /// Stellar address or username initiating the batch (recorded in audit log)
+        /// Comma-separated IDs — fallback when --file is absent
+        #[arg(long)]
+        contracts: Option<String>,
+
+        /// Filter by network when discovering from API (mainnet|testnet|futurenet)
+        #[arg(long)]
+        network: Option<String>,
+
+        /// Filter by category when discovering from API (e.g. defi, nft)
+        #[arg(long)]
+        category: Option<String>,
+
+        /// Only include contracts created within this many days
+        #[arg(long)]
+        age: Option<u32>,
+
+        /// Stellar address or username initiating the batch
         #[arg(long)]
         initiated_by: String,
 
-        /// Output results as machine-readable JSON
+        /// Verification depth: basic | standard | strict
+        #[arg(long, default_value = "standard")]
+        level: String,
+
+        /// Export report to file; format inferred from extension (.json or .csv)
+        #[arg(long)]
+        export: Option<String>,
+
+        /// Save human-readable report to a text file
+        #[arg(long)]
+        output: Option<String>,
+
+        /// Save cron schedule and print crontab entry
+        #[arg(long)]
+        schedule: Option<String>,
+
+        /// Output machine-readable JSON
         #[arg(long)]
         json: bool,
     },
@@ -10992,16 +11131,38 @@ pub async fn dispatch_command(
             }
         },
         Commands::BatchVerify {
+            file,
             contracts,
+            network,
+            category,
+            age,
             initiated_by,
+            level,
+            export,
+            output,
+            schedule,
             json,
         } => {
             log::debug!(
-                "Command: batch-verify | contracts={} initiated_by={}",
+                "Command: batch-verify | contracts={:?} initiated_by={}",
                 contracts,
                 initiated_by
             );
-            batch_verify::run_batch_verify(&cli.api_url, &contracts, &initiated_by, json).await?;
+            batch_verify::run_batch_verify(batch_verify::BatchVerifyArgs {
+                api_url: &cli.api_url,
+                file: file.as_deref(),
+                contracts: contracts.as_deref(),
+                network: network.as_deref(),
+                category: category.as_deref(),
+                age,
+                initiated_by: &initiated_by,
+                level: &level,
+                export: export.as_deref(),
+                output: output.as_deref(),
+                schedule: schedule.as_deref(),
+                json,
+            })
+            .await?;
         }
         Commands::Webhook { action } => match action {
             WebhookCommands::Create {
@@ -11587,6 +11748,8 @@ pub async fn dispatch_command(
                     include_stale
                 );
                 cache::export(&format, include_stale)?;
+            }
+        },
         // ── Environment variable management (#843) ───────────────────────────
         Commands::Env { action } => match action {
             EnvCommands::Set {

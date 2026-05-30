@@ -136,9 +136,7 @@ pub async fn elasticsearch_search(
     match es_result {
         Ok(es_response) => {
             // Extract result count from ES hits for analytics
-            let result_count = es_response["hits"]["total"]["value"]
-                .as_i64()
-                .unwrap_or(0);
+            let result_count = es_response["hits"]["total"]["value"].as_i64().unwrap_or(0);
 
             record_search_event(&state.db, &query, "elasticsearch", result_count, 0).await;
 
@@ -169,11 +167,10 @@ pub async fn elasticsearch_search(
                 offset: params.offset,
             };
 
-            let pg_result = state
-                .pg_search
-                .search(search_req)
-                .await
-                .map_err(|e| ApiError::internal_error("SEARCH_FALLBACK_ERROR", e.to_string()))?;
+            let pg_result =
+                state.pg_search.search(search_req).await.map_err(|e| {
+                    ApiError::internal_error("SEARCH_FALLBACK_ERROR", e.to_string())
+                })?;
 
             record_search_event(
                 &state.db,
@@ -265,9 +262,7 @@ pub async fn get_trending_searches(
 
 /// POST /api/admin/search/reindex
 /// Triggers a full re-index of all contracts into Elasticsearch.
-pub async fn reindex_contracts(
-    State(state): State<AppState>,
-) -> Result<Json<Value>, ApiError> {
+pub async fn reindex_contracts(State(state): State<AppState>) -> Result<Json<Value>, ApiError> {
     // Fetch all contracts and index them into ES
     let contracts = sqlx::query_as::<_, shared::models::Contract>(
         "SELECT * FROM contracts ORDER BY created_at DESC",
@@ -331,7 +326,10 @@ pub async fn upsert_synonym(
     Json(req): Json<UpsertSynonymRequest>,
 ) -> Result<Json<SearchSynonym>, ApiError> {
     if req.term.trim().is_empty() {
-        return Err(ApiError::bad_request("INVALID_TERM", "term cannot be empty"));
+        return Err(ApiError::bad_request(
+            "INVALID_TERM",
+            "term cannot be empty",
+        ));
     }
 
     let row = sqlx::query_as::<_, SearchSynonym>(

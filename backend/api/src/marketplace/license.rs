@@ -103,12 +103,10 @@ impl LicenseSigner {
     /// Sign a claims set into a compact JWS.
     pub fn sign(&self, claims: &LicenseClaims) -> Result<String, LicenseError> {
         let header = serde_json::json!({"alg": "EdDSA", "typ": "JWT"});
-        let header_b64 = B64URL.encode(
-            serde_json::to_vec(&header).map_err(|_| LicenseError::MalformedToken)?,
-        );
-        let claims_b64 = B64URL.encode(
-            serde_json::to_vec(claims).map_err(|_| LicenseError::MalformedToken)?,
-        );
+        let header_b64 =
+            B64URL.encode(serde_json::to_vec(&header).map_err(|_| LicenseError::MalformedToken)?);
+        let claims_b64 =
+            B64URL.encode(serde_json::to_vec(claims).map_err(|_| LicenseError::MalformedToken)?);
 
         let signing_input = format!("{header_b64}.{claims_b64}");
         let sig: Signature = self.signing_key.sign(signing_input.as_bytes());
@@ -209,7 +207,10 @@ mod tests {
         sig.push('A');
         parts[2] = &sig;
         let tampered = parts.join(".");
-        assert!(matches!(s.verify(&tampered), Err(LicenseError::BadSignature) | Err(LicenseError::MalformedToken)));
+        assert!(matches!(
+            s.verify(&tampered),
+            Err(LicenseError::BadSignature) | Err(LicenseError::MalformedToken)
+        ));
     }
 
     #[test]

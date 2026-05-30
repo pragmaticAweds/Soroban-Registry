@@ -221,7 +221,9 @@ pub async fn confirm_intent(
         ));
     }
     if req.observed_stroops <= 0 {
-        return Err(ApiError::bad_request_msg("observed_stroops must be positive"));
+        return Err(ApiError::bad_request_msg(
+            "observed_stroops must be positive",
+        ));
     }
 
     // Atomic check-and-claim: Postgres row locks serialise concurrent
@@ -391,4 +393,3 @@ fn load_usdc_config() -> ApiResult<UsdcConfig> {
         ),
     })
 }
-

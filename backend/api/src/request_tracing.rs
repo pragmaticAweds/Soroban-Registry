@@ -342,7 +342,11 @@ pub fn current_request_id() -> Option<String> {
         .ok()
 }
 
-pub fn inject_business_context(user_id: Option<&str>, contract_id: Option<&str>, org_id: Option<&str>) {
+pub fn inject_business_context(
+    user_id: Option<&str>,
+    contract_id: Option<&str>,
+    org_id: Option<&str>,
+) {
     let span = tracing::Span::current();
     if let Some(uid) = user_id {
         span.record("user_id", &uid);
@@ -485,16 +489,17 @@ pub fn init_json_tracing() {
             .ok()
             .and_then(|v| v.parse::<f64>().ok())
             .unwrap_or(1.0);
-            
-        let sampler = opentelemetry_sdk::trace::Sampler::ParentBased(
-            Box::new(opentelemetry_sdk::trace::Sampler::TraceIdRatioBased(sample_rate))
-        );
+
+        let sampler = opentelemetry_sdk::trace::Sampler::ParentBased(Box::new(
+            opentelemetry_sdk::trace::Sampler::TraceIdRatioBased(sample_rate),
+        ));
 
         let trace_config = opentelemetry_sdk::trace::Config::default()
             .with_sampler(sampler)
-            .with_resource(Resource::new(vec![
-                KeyValue::new("service.name", service_name.clone()),
-            ]));
+            .with_resource(Resource::new(vec![KeyValue::new(
+                "service.name",
+                service_name.clone(),
+            )]));
 
         match opentelemetry_otlp::new_pipeline()
             .tracing()

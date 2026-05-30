@@ -34,8 +34,8 @@ use crate::{
         self, issuance,
         models::IssuedLicense,
         stripe::{
-            verify_webhook_signature, CheckoutSession, CheckoutSessionParams, CheckoutSessionPayload,
-            StripeClient, StripeError, WebhookEvent,
+            verify_webhook_signature, CheckoutSession, CheckoutSessionParams,
+            CheckoutSessionPayload, StripeClient, StripeError, WebhookEvent,
         },
     },
     state::AppState,
@@ -233,8 +233,8 @@ pub async fn webhook(
 }
 
 async fn handle_checkout_completed(state: &AppState, event: &WebhookEvent) -> ApiResult<()> {
-    let session: CheckoutSessionPayload =
-        serde_json::from_value(event.data.object.clone()).map_err(|e| {
+    let session: CheckoutSessionPayload = serde_json::from_value(event.data.object.clone())
+        .map_err(|e| {
             ApiError::bad_request("malformed_session", format!("checkout session decode: {e}"))
         })?;
 
@@ -249,9 +249,9 @@ async fn handle_checkout_completed(state: &AppState, event: &WebhookEvent) -> Ap
                 "checkout session missing payment_id metadata",
             )
         })?;
-    let payment_id: Uuid = payment_id_str.parse().map_err(|_| {
-        ApiError::bad_request("bad_metadata", "payment_id metadata is not a uuid")
-    })?;
+    let payment_id: Uuid = payment_id_str
+        .parse()
+        .map_err(|_| ApiError::bad_request("bad_metadata", "payment_id metadata is not a uuid"))?;
 
     // Lookup the pending payment row.
     let payment = sqlx::query_as::<_, PaymentRow>(
@@ -309,13 +309,11 @@ async fn handle_checkout_completed(state: &AppState, event: &WebhookEvent) -> Ap
     .execute(&state.db)
     .await?;
 
-    sqlx::query(
-        "UPDATE marketplace_stripe_webhook_events SET payment_id = $2 WHERE event_id = $1",
-    )
-    .bind(&event.id)
-    .bind(payment.id)
-    .execute(&state.db)
-    .await?;
+    sqlx::query("UPDATE marketplace_stripe_webhook_events SET payment_id = $2 WHERE event_id = $1")
+        .bind(&event.id)
+        .bind(payment.id)
+        .execute(&state.db)
+        .await?;
 
     tracing::info!(
         payment_id = %payment.id,

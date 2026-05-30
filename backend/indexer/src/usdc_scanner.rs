@@ -50,12 +50,12 @@ pub enum ScannerError {
 }
 
 pub struct ScannerConfig {
-    pub network: String,             // "testnet" | "public"
-    pub horizon_url: String,         // e.g. "https://horizon-testnet.stellar.org"
-    pub receiving_address: String,   // G...
-    pub usdc_issuer: String,         // G...
-    pub registry_base_url: String,   // e.g. "http://localhost:3001"
-    pub registry_token: String,      // Bearer token for the confirm endpoint
+    pub network: String,           // "testnet" | "public"
+    pub horizon_url: String,       // e.g. "https://horizon-testnet.stellar.org"
+    pub receiving_address: String, // G...
+    pub usdc_issuer: String,       // G...
+    pub registry_base_url: String, // e.g. "http://localhost:3001"
+    pub registry_token: String,    // Bearer token for the confirm endpoint
 }
 
 impl ScannerConfig {
@@ -69,13 +69,13 @@ impl ScannerConfig {
         };
         let usdc_issuer = std::env::var("MARKETPLACE_USDC_ASSET_ISSUER")
             .map_err(|_| ScannerError::Config("MARKETPLACE_USDC_ASSET_ISSUER not set".into()))?;
-        let network = std::env::var("MARKETPLACE_USDC_NETWORK").unwrap_or_else(|_| "testnet".into());
-        let horizon_url = std::env::var("MARKETPLACE_HORIZON_URL").unwrap_or_else(|_| {
-            match network.as_str() {
+        let network =
+            std::env::var("MARKETPLACE_USDC_NETWORK").unwrap_or_else(|_| "testnet".into());
+        let horizon_url =
+            std::env::var("MARKETPLACE_HORIZON_URL").unwrap_or_else(|_| match network.as_str() {
                 "public" => "https://horizon.stellar.org".to_string(),
                 _ => "https://horizon-testnet.stellar.org".to_string(),
-            }
-        });
+            });
         let registry_base_url = std::env::var("MARKETPLACE_REGISTRY_BASE_URL")
             .map_err(|_| ScannerError::Config("MARKETPLACE_REGISTRY_BASE_URL not set".into()))?;
         let registry_token = std::env::var("MARKETPLACE_INDEXER_API_TOKEN")
@@ -290,7 +290,10 @@ impl UsdcScanner {
         Ok(())
     }
 
-    async fn fetch_payments(&self, cursor: Option<&str>) -> Result<HorizonPaymentsPage, ScannerError> {
+    async fn fetch_payments(
+        &self,
+        cursor: Option<&str>,
+    ) -> Result<HorizonPaymentsPage, ScannerError> {
         let mut url = format!(
             "{}/accounts/{}/payments?order=asc&limit={}",
             self.cfg.horizon_url, self.cfg.receiving_address, HORIZON_PAGE_LIMIT
@@ -309,10 +312,7 @@ impl UsdcScanner {
             .map_err(|e| ScannerError::Horizon(e.to_string()))?;
 
         if !resp.status().is_success() {
-            return Err(ScannerError::Horizon(format!(
-                "HTTP {}",
-                resp.status()
-            )));
+            return Err(ScannerError::Horizon(format!("HTTP {}", resp.status())));
         }
         resp.json::<HorizonPaymentsPage>()
             .await
@@ -360,7 +360,10 @@ impl UsdcScanner {
         tx_hash: &str,
         observed_stroops: i64,
     ) -> ConfirmOutcome {
-        let url = format!("{}/api/marketplace/usdc/confirm", self.cfg.registry_base_url);
+        let url = format!(
+            "{}/api/marketplace/usdc/confirm",
+            self.cfg.registry_base_url
+        );
         let body = ConfirmRequest {
             memo: memo.to_string(),
             tx_hash: tx_hash.to_string(),

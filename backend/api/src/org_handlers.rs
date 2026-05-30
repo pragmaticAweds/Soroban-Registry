@@ -1,9 +1,9 @@
+use crate::validation::extractors::ValidatedJson;
 use crate::{
     auth::AuthClaims,
     error::{ApiError, ApiResult},
     state::AppState,
 };
-use crate::validation::extractors::ValidatedJson;
 use axum::{
     extract::{Path, State},
     http::StatusCode,

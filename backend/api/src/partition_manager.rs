@@ -87,25 +87,22 @@ pub async fn list_partitions(
 pub async fn get_partition_status(
     State(state): State<AppState>,
 ) -> Result<Json<PartitionStatus>, ApiError> {
-    let total: i64 =
-        sqlx::query_scalar("SELECT COUNT(*) FROM partition_registry")
+    let total: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM partition_registry")
+        .fetch_one(&state.db)
+        .await
+        .unwrap_or(0);
+
+    let active: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM partition_registry WHERE status = 'active'")
             .fetch_one(&state.db)
             .await
             .unwrap_or(0);
 
-    let active: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM partition_registry WHERE status = 'active'",
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
-
-    let archived: i64 = sqlx::query_scalar(
-        "SELECT COUNT(*) FROM partition_registry WHERE status = 'archived'",
-    )
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(0);
+    let archived: i64 =
+        sqlx::query_scalar("SELECT COUNT(*) FROM partition_registry WHERE status = 'archived'")
+            .fetch_one(&state.db)
+            .await
+            .unwrap_or(0);
 
     let table_rows = sqlx::query(
         r#"
@@ -149,10 +146,7 @@ pub async fn create_partition(
     State(state): State<AppState>,
     Json(req): Json<CreatePartitionRequest>,
 ) -> Result<Json<PartitionInfo>, ApiError> {
-    let allowed_parents = [
-        "interactions_partitioned",
-        "audit_logs_partitioned",
-    ];
+    let allowed_parents = ["interactions_partitioned", "audit_logs_partitioned"];
     if !allowed_parents.contains(&req.parent_table.as_str()) {
         return Err(ApiError::bad_request(
             "INVALID_PARENT",
@@ -313,13 +307,12 @@ async fn ensure_upcoming_interaction_partition(pool: &PgPool) {
         next_month_start.month()
     );
 
-    let exists: bool = sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM pg_class WHERE relname = $1)",
-    )
-    .bind(&partition_name)
-    .fetch_one(pool)
-    .await
-    .unwrap_or(false);
+    let exists: bool =
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM pg_class WHERE relname = $1)")
+            .bind(&partition_name)
+            .fetch_one(pool)
+            .await
+            .unwrap_or(false);
 
     if exists {
         return;

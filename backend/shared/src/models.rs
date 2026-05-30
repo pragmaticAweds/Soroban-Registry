@@ -992,6 +992,9 @@ pub struct BatchVerifyItem {
     pub build_params: Option<serde_json::Value>,
     #[serde(default)]
     pub compiler_version: Option<String>,
+    /// "basic" | "standard" | "strict"
+    #[serde(default)]
+    pub level: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, utoipa::ToSchema)]

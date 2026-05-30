@@ -43,8 +43,8 @@ impl UsdcConfig {
         }
         let asset_issuer = std::env::var("MARKETPLACE_USDC_ASSET_ISSUER")
             .map_err(|_| UsdcError::AssetIssuerMissing)?;
-        let network = std::env::var("MARKETPLACE_USDC_NETWORK")
-            .unwrap_or_else(|_| "testnet".to_string());
+        let network =
+            std::env::var("MARKETPLACE_USDC_NETWORK").unwrap_or_else(|_| "testnet".to_string());
         if network != "testnet" && network != "public" {
             return Err(UsdcError::BadNetwork(network));
         }
@@ -110,7 +110,7 @@ mod tests {
     #[test]
     fn cents_to_stroops_conversion() {
         assert_eq!(cents_to_usdc_stroops(100), 10_000_000); // $1.00 = 1 USDC
-        assert_eq!(cents_to_usdc_stroops(1), 100_000);       // $0.01
+        assert_eq!(cents_to_usdc_stroops(1), 100_000); // $0.01
         assert_eq!(cents_to_usdc_stroops(2999), 299_900_000); // $29.99
     }
 
