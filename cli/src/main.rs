@@ -50,6 +50,7 @@ mod wizard;
 
 // Added the search module
 mod search;
+mod diagnostic;
 
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};
@@ -89,6 +90,10 @@ pub struct Cli {
     /// Check for CLI updates before running the command.
     #[arg(long, global = true)]
     pub check_updates: bool,
+
+    /// Automatically run diagnostics when a command fails
+    #[arg(long, global = true)]
+    pub auto_diag: bool,
 
     #[command(subcommand)]
     pub command: Commands,
@@ -925,9 +930,45 @@ pub enum Commands {
         action: PluginCommands,
     },
 
+    /// Run diagnostics and health checks on the CLI environment
+    Diagnostic {
+        #[command(subcommand)]
+        action: DiagnosticCommands,
+    },
+
     /// External command (may be provided by an installed plugin)
     #[command(external_subcommand)]
     External(Vec<String>),
+}
+
+/// Sub-commands for the `diagnostic` group
+#[derive(Debug, Subcommand)]
+pub enum DiagnosticCommands {
+    /// Execute all diagnostic checks and print results
+    Run {
+        #[arg(long)]
+        detailed: bool,
+        #[arg(long)]
+        export: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Generate a comprehensive diagnostic report
+    Report {
+        #[arg(long)]
+        detailed: bool,
+        #[arg(long)]
+        export: Option<String>,
+        #[arg(long)]
+        json: bool,
+    },
+    /// Export raw diagnostic data to a JSON file
+    Export {
+        /// Output file path
+        output: String,
+        #[arg(long)]
+        detailed: bool,
+    },
 }
 
 /// Sub-commands for the `network` group
@@ -1734,7 +1775,23 @@ async fn main() -> Result<()> {
     log::debug!("Verbose mode enabled");
     log::debug!("API URL: {}", cli.api_url);
 
-    handle_command(cli).await
+    let auto_diag = cli.auto_diag;
+    let api_url_clone = cli.api_url.clone();
+    let result = handle_command(cli).await;
+    if result.is_err() && auto_diag {
+        eprintln!(
+            "\n{}",
+            "Auto-diagnostics triggered by command failure:".yellow().bold()
+        );
+        let _ = diagnostic::run_diagnostic(diagnostic::DiagnosticArgs {
+            api_url: &api_url_clone,
+            detailed: false,
+            export: None,
+            json: false,
+        })
+        .await;
+    }
+    result
 }
 
 pub async fn handle_command(cli: Cli) -> Result<()> {
@@ -1907,7 +1964,32 @@ pub async fn dispatch_command(
                     .await?;
             print!("{}", result.stdout);
         }
-        
+        Commands::Diagnostic { action } => match action {
+            DiagnosticCommands::Run { detailed, export, json } => {
+                log::debug!("Command: diagnostic run");
+                diagnostic::run_diagnostic(diagnostic::DiagnosticArgs {
+                    api_url: &cli.api_url,
+                    detailed,
+                    export: export.as_deref(),
+                    json,
+                })
+                .await?;
+            }
+            DiagnosticCommands::Report { detailed, export, json } => {
+                log::debug!("Command: diagnostic report");
+                diagnostic::generate_report(diagnostic::DiagnosticArgs {
+                    api_url: &cli.api_url,
+                    detailed,
+                    export: export.as_deref(),
+                    json,
+                })
+                .await?;
+            }
+            DiagnosticCommands::Export { output, detailed } => {
+                log::debug!("Command: diagnostic export | output={}", output);
+                diagnostic::export_diagnostic(&output, detailed, &cli.api_url).await?;
+            }
+        },
         Commands::Info { id } => {
             commands::contract_info(&cli.api_url, &id).await?;
         }
@@ -3174,6 +3256,7 @@ mod verbose_flag_tests {
         assert_eq!(cli.verbose, 2);
     }
 }
+
 #![allow(unused_variables)]
 
 mod analytics;
