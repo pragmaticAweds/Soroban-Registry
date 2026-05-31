@@ -95,6 +95,7 @@ pub mod archival;
 pub mod audit;
 pub mod config;
 pub mod db_monitoring;
+pub mod db_pool;
 pub mod db_resilience;
 pub mod dependency;
 pub mod elasticsearch_handlers;
