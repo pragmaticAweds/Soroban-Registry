@@ -1,25 +1,27 @@
 #[cfg(feature = "openapi")]
 use crate::openapi;
 use crate::{
-    ab_test_handlers, abi_versioning_handlers, ai::handlers as ai_handlers, analytics_handlers,
-    archival, auth, auth_handlers, batch_verify_handlers, breaking_changes, bulk_operations_handlers,
-    canary_handlers, category_handlers, client_observability_handlers, clone_federation_handlers,
-    collaborative_reviews, compatibility_testing_handlers, contract_events,
-    contract_stats_handlers, contributor_handlers, custom_metrics_handlers, dependency_handlers,
-    deprecated_contracts_handlers, deprecation_handlers, error_logging,
-    formal_verification_handlers, gas_estimation_handlers,
-    governance_handlers, graph_analysis_handlers, handlers, interoperability_handlers,
-    marketplace::{license_handlers as mp_license, metering as mp_metering,
-                  pricing_handlers as mp_pricing, stripe_handlers as mp_stripe,
-                  usdc_handlers as mp_usdc},
-    elasticsearch_handlers, integrity, metrics_handler, migration_handlers, mutation_testing_handlers,
-    org_handlers, partition_manager, patch_handlers, performance_handlers,
-    plugin_marketplace_handlers, publisher_verification_handlers, query_analysis, query_monitor,
-    recommendation_handlers, report_handlers, resource_handlers, search_postgres,
-    security_scan_handlers, signature_verification, similarity_handlers, simulation_handlers,
+    ab_test_handlers, abi_versioning_handlers,
+    ai::handlers as ai_handlers,
+    analytics_handlers, archival, auth, auth_handlers, batch_verify_handlers, breaking_changes,
+    bulk_operations_handlers, canary_handlers, category_handlers, client_observability_handlers,
+    clone_federation_handlers, collaborative_reviews, compatibility_testing_handlers,
+    contract_events, contract_stats_handlers, contributor_handlers, custom_metrics_handlers,
+    dependency_handlers, deprecated_contracts_handlers, deprecation_handlers,
+    elasticsearch_handlers, error_logging, formal_verification_handlers, gas_estimation_handlers,
+    governance_handlers, graph_analysis_handlers, handlers, integrity, interoperability_handlers,
+    marketplace::{
+        license_handlers as mp_license, metering as mp_metering, pricing_handlers as mp_pricing,
+        stripe_handlers as mp_stripe, usdc_handlers as mp_usdc,
+    },
+    metrics_handler, migration_handlers, mutation_testing_handlers, org_handlers,
+    partition_manager, patch_handlers, performance_handlers, plugin_marketplace_handlers,
+    publisher_verification_handlers, query_analysis, query_monitor, recommendation_handlers,
+    report_handlers, resource_handlers, search_postgres, security_scan_handlers,
+    signature_verification, similarity_handlers, simulation_handlers,
     state::AppState,
-    state_monitor::handlers as state_monitor_handlers, stats, subscription_handlers,
-    v1_search_handlers, v1_similar_handlers, v1_trending_handlers,
+    state_monitor::handlers as state_monitor_handlers,
+    stats, subscription_handlers, v1_search_handlers, v1_similar_handlers, v1_trending_handlers,
     verification_handlers, websocket, zk_proof_handlers,
 };
 
@@ -132,6 +134,7 @@ pub fn signature_verification_routes() -> Router<AppState> {
         .route(
             "/api/contracts/:id/signatures",
             get(signature_verification::list_contract_signatures),
+        )
         // Application-side query logging & analysis (issue #887)
         .merge(query_analysis_routes())
 }
@@ -211,8 +214,10 @@ pub fn observability_routes() -> Router<AppState> {
 
 pub fn auth_routes() -> Router<AppState> {
     Router::new()
+        .route("/api/auth/csrf", get(auth_handlers::get_csrf_token))
         .route("/api/auth/challenge", get(auth_handlers::get_challenge))
         .route("/api/auth/verify", post(auth_handlers::verify_challenge))
+        .route("/api/auth/refresh", post(auth_handlers::refresh_token))
 }
 
 pub fn validator_routes() -> Router<AppState> {
@@ -1043,8 +1048,14 @@ pub fn performance_routes() -> Router<AppState> {
 pub fn admin_routes() -> Router<AppState> {
     Router::new()
         .route("/api/admin/audit-logs", get(handlers::get_all_audit_logs))
-        .route("/api/admin/audit-logs/export", get(handlers::handle_export_audit))
-        .route("/api/admin/audit-logs/cleanup", post(handlers::handle_retention_cleanup)) 
+        .route(
+            "/api/admin/audit-logs/export",
+            get(handlers::handle_export_audit),
+        )
+        .route(
+            "/api/admin/audit-logs/cleanup",
+            post(handlers::handle_retention_cleanup),
+        )
         .merge(migration_routes())
         // Category management (issue #414) – admin-only write endpoints
         .route(
