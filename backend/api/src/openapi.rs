@@ -9,6 +9,7 @@ use crate::interoperability_handlers;
 use crate::metrics_handler;
 use crate::recommendation_handlers;
 use crate::similarity_handlers;
+use crate::v1_interactions_handlers;
 use shared::models::*;
 use utoipa::OpenApi;
 
@@ -59,6 +60,7 @@ use utoipa::OpenApi;
         handlers::get_contract_interactions,
         handlers::post_contract_interaction,
         handlers::post_contract_interactions_batch,
+        v1_interactions_handlers::get_contract_interactions_v1,
         crate::auth_handlers::get_challenge,
         crate::auth_handlers::verify_challenge,
         breaking_changes::get_breaking_changes,
@@ -141,6 +143,9 @@ use utoipa::OpenApi;
             ContractInteractionResponse,
             CreateInteractionRequest,
             CreateInteractionBatchRequest,
+            v1_interactions_handlers::InteractionsV1Response,
+            v1_interactions_handlers::InteractionV1Item,
+            v1_interactions_handlers::InteractionStats,
             crate::auth_handlers::ChallengeResponse,
             crate::auth_handlers::VerifyRequest,
             crate::auth_handlers::VerifyResponse,
