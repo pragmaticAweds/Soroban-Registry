@@ -51,8 +51,10 @@ mod webhook;
 mod wizard;
 
 // Added the search module
-mod search;
-mod diagnostic;
+    mod search;
+    mod diagnostic;
+    mod cache;
+    mod auth;
 
 use anyhow::Result;
 use clap::{ArgAction, Parser, Subcommand};

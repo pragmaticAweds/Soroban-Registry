@@ -319,7 +319,6 @@ impl Default for VerificationResult {
         }
     }
 }
-}
 
 async fn fetch_contract(
     api_url: &str,

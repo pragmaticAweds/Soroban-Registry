@@ -111,6 +111,7 @@ pub mod stats;
 pub mod system_health;
 pub mod webhook_delivery;
 pub mod integrity;
+pub mod signature_verification;
 pub mod query_analysis;
 pub mod deprecated_contracts_handlers;
 pub mod report_handlers;
