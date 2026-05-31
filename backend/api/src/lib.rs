@@ -119,4 +119,3 @@ pub mod deprecated_contracts_handlers;
 pub mod report_handlers;
 pub mod v1_similar_handlers;
 pub mod v1_trending_handlers;
-pub mod v1_interactions_handlers;
