@@ -187,10 +187,10 @@ impl FeatureFlagManager {
 
 /// Axum middleware that rejects a request when the named feature flag is disabled.
 /// Use for routes that should only be accessible when a feature flag is active.
-pub async fn require_feature_flag<B>(
+pub async fn require_feature_flag(
     State(state): State<AppState>,
-    req: Request<B>,
-    next: Next<B>,
+    req: Request<axum::body::Body>,
+    next: Next,
 ) -> Response {
     // Extract the feature flag key from an extension set by the router
     let flag_key = match req.extensions().get::<String>() {

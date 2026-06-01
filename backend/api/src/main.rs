@@ -7,6 +7,7 @@ use axum::middleware;
 use axum::response::Response;
 use prometheus::Registry;
 use sqlx::postgres::PgPoolOptions;
+use sqlx::ConnectOptions;
 use std::net::SocketAddr;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::Arc;

@@ -32,6 +32,7 @@ pub mod error_logging;
 pub mod events;
 pub mod formal_verification;
 pub mod formal_verification_handlers;
+pub mod formal_verification_integration;
 pub mod gas_estimation_handlers;
 pub mod governance_handlers;
 pub mod graph_analysis;

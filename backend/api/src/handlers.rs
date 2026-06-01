@@ -2042,7 +2042,10 @@ pub async fn list_contracts(
         let categories = params.categories.clone().filter(|c| !c.is_empty());
         let tags = params.tags.clone().filter(|t| !t.is_empty());
         let verified_only = params.verified_only;
-        let verification_status = params.verification_status.as_ref().map(|s| s.to_string());
+        let verification_status = params
+            .verification_status
+            .as_ref()
+            .map(|s| format!("{s:?}").to_lowercase());
 
         let filters = shared::SearchFilterMetadata {
             networks,
@@ -2242,6 +2245,7 @@ fn contract_export_response(
 ) -> Response {
     let content_type = match format {
         ContractExportFormat::Json => "application/json; charset=utf-8",
+        ContractExportFormat::Jsonl => "application/x-ndjson; charset=utf-8",
         ContractExportFormat::Yaml => "application/yaml; charset=utf-8",
         ContractExportFormat::Csv => "text/csv; charset=utf-8",
     };

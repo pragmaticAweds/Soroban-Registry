@@ -65,6 +65,9 @@ use crate::error::ApiError;
 // Issue #891: 1,000 requests per minute per IP/API key by default.
 const DEFAULT_ANON_LIMIT: u32 = 1_000;
 const DEFAULT_AUTH_LIMIT: u32 = 1_000;
+// Stricter default quotas for mutation (write) endpoints.
+const DEFAULT_WRITE_ANON_LIMIT: u32 = 100;
+const DEFAULT_WRITE_AUTH_LIMIT: u32 = 300;
 const DEFAULT_WINDOW_SECONDS: u64 = 60;
 #[allow(dead_code)]
 const DEFAULT_CONTRACTS_PAGE_SIZE: u32 = 50;
@@ -346,6 +349,9 @@ impl RateLimitState {
         let tier = extract_api_tier(request);
         let path = request.uri().path();
         let query = request.uri().query();
+        // Mutation requests get a separate, stricter bucket.
+        let is_write = matches!(request.method().as_str(), "POST" | "PUT" | "PATCH" | "DELETE");
+        let bucket_suffix = if is_write { "write" } else { "read" };
 
         if is_contract_abi_endpoint(request.method(), path) {
             return (
@@ -363,20 +369,29 @@ impl RateLimitState {
                 .config
                 .per_api_key_limit(&token)
                 .unwrap_or_else(|| self.config.hourly_limit_for_tier(&tier));
-            let burst = self.config.burst_limit_for_limit(hourly);
+            let auth_hourly = if is_write {
+                self.config.write_auth_limit.min(hourly)
+            } else {
+                hourly
+            };
+            let burst = self.config.burst_limit_for_limit(auth_hourly);
             return (
-                hourly,
+                auth_hourly,
                 burst,
                 BucketKey {
                     client_key: format!("auth:{bucket_suffix}:{token}"),
                 },
+                tier,
             );
         }
 
         let ip = extract_client_ip(request);
         if is_write {
+            let limit = self.config.write_anonymous_limit;
+            let burst = self.config.burst_limit_for_limit(limit);
             return (
-                self.config.write_anonymous_limit,
+                limit,
+                burst,
                 BucketKey {
                     client_key: format!("anon:write:{ip}"),
                 },

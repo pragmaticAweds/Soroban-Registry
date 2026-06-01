@@ -724,7 +724,8 @@ mod tests {
             visibility: shared::VisibilityType::Public,
             current_version: None,
             usage_count: 0,
-        };
+        }
+    }
 
     #[test]
     fn code_key_requires_valid_hash() {

@@ -7,7 +7,8 @@ use crate::{
     collaborative_reviews, compatibility_testing_handlers, contract_events,
     contract_stats_handlers, contributor_handlers, custom_metrics_handlers, dependency_handlers,
     deprecated_contracts_handlers, deprecation_handlers, error_logging,
-    feature_flags, formal_verification_handlers, gas_estimation_handlers,
+    feature_flags, formal_verification_handlers, formal_verification_integration,
+    gas_estimation_handlers,
     governance_handlers, graph_analysis_handlers, handlers, interoperability_handlers,
     marketplace::{license_handlers as mp_license, metering as mp_metering,
                   pricing_handlers as mp_pricing, stripe_handlers as mp_stripe,
@@ -1298,6 +1299,48 @@ pub fn formal_verification_routes() -> Router<AppState> {
         .route(
             "/api/contracts/:id/formal-verification/:session_id",
             get(formal_verification_handlers::get_formal_verification_session),
+        )
+        .merge(formal_verification_integration_routes())
+}
+
+/// Issue #889 — formal verification integration: pluggable backends, property
+/// config, optional/mandatory policy, timeout-aware runs, caching, reports.
+pub fn formal_verification_integration_routes() -> Router<AppState> {
+    Router::new()
+        // Per-contract run + profile integration.
+        .route(
+            "/api/contracts/:id/formal-verification/run",
+            post(formal_verification_integration::run_verification),
+        )
+        .route(
+            "/api/contracts/:id/formal-verification/runs",
+            get(formal_verification_integration::list_runs),
+        )
+        .route(
+            "/api/contracts/:id/formal-verification/runs/:run_id/report",
+            get(formal_verification_integration::get_report),
+        )
+        .route(
+            "/api/contracts/:id/formal-verification/summary",
+            get(formal_verification_integration::get_summary),
+        )
+        .route(
+            "/api/contracts/:id/formal-verification/requirement",
+            get(formal_verification_integration::get_requirement),
+        )
+        // Property configuration + per-category policy.
+        .route(
+            "/api/formal-verification/properties",
+            get(formal_verification_integration::list_properties)
+                .post(formal_verification_integration::upsert_property),
+        )
+        .route(
+            "/api/formal-verification/policies",
+            get(formal_verification_integration::list_policies),
+        )
+        .route(
+            "/api/formal-verification/policies/:category",
+            put(formal_verification_integration::set_policy),
         )
 }
 
