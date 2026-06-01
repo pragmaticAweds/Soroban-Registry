@@ -6684,11 +6684,11 @@ pub async fn get_contract_audits(
 
     let audits = rows.into_iter().map(|(scan_id, total, crit, high, med, low, completed_at)| {
         let status = if crit > 0 {
-            shared::AuditStatus::Failed
+            shared::AuditScanStatus::Failed
         } else if high > 0 || med > 0 {
-            shared::AuditStatus::Issues
+            shared::AuditScanStatus::Issues
         } else {
-            shared::AuditStatus::Passed
+            shared::AuditScanStatus::Passed
         };
 
         let mut findings = vec![];
