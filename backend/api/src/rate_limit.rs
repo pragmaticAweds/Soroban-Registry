@@ -599,6 +599,17 @@ pub async fn rate_limit_middleware(
 
     if !decision.allowed {
         let is_write = is_write_method(request.method());
+        // Observability: surface throttle events so operators can spot abuse or
+        // accidental overload of public endpoints (issue #1005).
+        tracing::warn!(
+            client_ip = %extract_client_ip(&request),
+            tier = tier.as_str(),
+            limit_type = if is_write { "write" } else { "read" },
+            limit = decision.limit,
+            remaining = decision.remaining,
+            retry_after_seconds = decision.reset_seconds,
+            "Request throttled by rate limiter"
+        );
         let detail = if is_write {
             "Write quota exhausted. Reduce request frequency or wait for the window to reset."
         } else {
