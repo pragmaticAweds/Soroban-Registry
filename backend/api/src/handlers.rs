@@ -4351,6 +4351,18 @@ pub async fn publish_contract(
         .await
         .map_err(|err| db_internal_error("fetch contract after insert", err))?;
 
+    // Backfill contract metadata cache for immediate reads
+    if let Ok(contract_json) = serde_json::to_string(&contract) {
+        let _ = state
+            .cache
+            .put_contract_meta(&contract.contract_id, contract_json.clone())
+            .await;
+        let _ = state
+            .cache
+            .put_contract_meta(&contract.id.to_string(), contract_json)
+            .await;
+    }
+
     // Save dependencies if provided
     if !req.dependencies.is_empty() {
         if let Err(e) =
